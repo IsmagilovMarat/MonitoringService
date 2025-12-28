@@ -1,0 +1,45 @@
+﻿@page
+@model MonitoringServiceCore.Pages.LoginModel
+
+
+@{
+    ViewData["Title"] = "Вход";
+}
+
+<h2>Вход в систему</h2>
+
+@if (Model.ErrorMessage != null)
+{
+    <div style="color: red; margin-bottom: 10px;">@Model.ErrorMessage</div>
+}
+
+<form method="post">
+    <div>
+        <label>Имя пользователя:</label><br>
+        <input type="text" name="username" required>
+    </div>
+    <div style="margin-top: 10px;">
+        <label>Пароль:</label><br>
+        <input type="password" name="password" required>
+    </div>
+    <div style="margin-top: 15px;">
+        <button type="submit">Войти</button>
+    </div>
+</form>
+
+<style>
+    form div {
+        margin-bottom: 10px;
+    }
+    input {
+        padding: 5px;
+        width: 200px;
+    }
+    button {
+        padding: 8px 20px;
+        background-color: #007bff;
+        color: white;
+        border: none;
+        cursor: pointer;
+    }
+</style>
