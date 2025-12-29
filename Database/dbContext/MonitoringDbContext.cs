@@ -1,5 +1,8 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using MonitoringServiceCore.Database.Roles;
+using MonitoringServiceCore.Pages;
+using MonitoringServiceCore.Database.SiteAnalysisNamespace;
+using System.Reflection.Emit;
 
 namespace MonitoringServiceCore.Database.dbContext
 {
@@ -20,11 +23,22 @@ namespace MonitoringServiceCore.Database.dbContext
                   .HasOne(u => u.UserRole)
                   .WithMany(r => r.UsersList)
                   .HasForeignKey(u => u.RoleId);
+            modelbuilder.Entity<SiteAnalysis>(entity =>
+            {
+                entity.HasKey(e => e.Id);
+                entity.Property(e => e.Url).IsRequired().HasMaxLength(500);
+                entity.Property(e => e.AnalyzedDate).IsRequired();
+                entity.Property(e => e.Content).HasMaxLength(500);
+
+                entity.HasIndex(e => e.Url);
+                entity.HasIndex(e => e.AnalyzedDate);
+            });
 
         }
         //пользователи и безопасность
         public DbSet<User> Users { get; set; }
         public DbSet<Role> Roles { get; set; }
+        public DbSet<SiteAnalysis> SiteAnalyses { get; set; }
         //public DbSet<Permission> Permissions { get; set; }
         //public DbSet<UserRole> UserRoles { get; set; }
         //public DbSet<RolePermission> RolePermissions { get; set; }

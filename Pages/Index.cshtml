@@ -1,34 +1,294 @@
 ﻿@page
 @model IndexModel
 @{
-    ViewData["Title"] = "Home page";
+    ViewData["Title"] = "Анализ сайтов";
+    Layout = "";
 }
 
-@if (Model.users != null )
+@if (TempData["SuccessMessage"] != null)
 {
-    <div class="mt-5">
-        <h2>Users List</h2>
-        <table class="table">
-            <thead>
-                <tr>
-                    @foreach(var user in Model.users) 
-                    {
-
-                        <h1>@user.Name</h1>
-                        
-
-                    }
-                    
-                    <!-- Добавьте другие колонки по необходимости -->
-                </tr>
-            </thead>
-            <tbody>
-
-            </tbody>
-        </table>
+    <div class="alert alert-success alert-dismissible fade show" role="alert">
+        @TempData["SuccessMessage"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
     </div>
 }
-else
+
+@if (TempData["WarningMessage"] != null)
 {
-    <p class="mt-5">No users found.</p>
+    <div class="alert alert-warning alert-dismissible fade show" role="alert">
+        <i class="fas fa-exclamation-triangle"></i> @TempData["WarningMessage"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+}
+
+<div class="container mt-4">
+    <!-- Информация о словаре -->
+    @if (Model.DictionaryInfo != null)
+    {
+        <div class="alert alert-info">
+            <i class="fas fa-book"></i>
+            Словарь нецензурных слов: <strong>@Model.DictionaryInfo.TotalWords</strong> слов загружено
+            @if (Model.DictionaryInfo.SampleWords.Any())
+            {
+                <span class="ms-2">
+                    (примеры: @string.Join(", ", Model.DictionaryInfo.SampleWords))
+                </span>
+            }
+        </div>
+    }
+
+    <div class="row">
+        <!-- Форма для анализа сайта -->
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <h5><i class="fas fa-search"></i> Анализ сайта</h5>
+                </div>
+                <div class="card-body">
+                    <form method="post" asp-page-handler="AnalyzeSite">
+                        <div class="mb-3">
+                            <label for="siteUrl" class="form-label">URL сайта для анализа:</label>
+                            <input type="url"
+                                   class="form-control @(ViewData.ModelState["SiteUrl"]?.Errors.Count > 0 ? "is-invalid" : "")"
+                                   id="siteUrl"
+                                   asp-for="SiteUrl"
+                                   placeholder="https://example.com/page.html">
+                            @if (ViewData.ModelState["SiteUrl"]?.Errors.Count > 0)
+                            {
+                                <div class="invalid-feedback">
+                                    @ViewData.ModelState["SiteUrl"]?.Errors.First().ErrorMessage
+                                </div>
+                            }
+                            <div class="form-text">Анализ на наличие слов .NET и нецензурной лексики</div>
+                        </div>
+
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-search"></i> Проанализировать сайт
+                        </button>
+                    </form>
+
+                    @if (!string.IsNullOrEmpty(Model.ErrorMessage))
+                    {
+                        <div class="alert alert-danger mt-3">
+                            @Model.ErrorMessage
+                        </div>
+                    }
+                </div>
+            </div>
+
+            <!-- Результаты анализа .NET -->
+            @if (Model.HasAnalysis)
+            {
+                <div class="card mt-4">
+                    <div class="card-header bg-info text-white">
+                        <h5><i class="fas fa-code"></i> Результаты анализа .NET</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <h6>Результаты:</h6>
+                                    <ul class="list-group">
+                                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                                            Все варианты (.NET, NET)
+                                            <span class="badge bg-primary rounded-pill">@Model.AnalysisResult!.CountAllVariants</span>
+                                        </li>
+                                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                                            Только ".NET"
+                                            <span class="badge bg-secondary rounded-pill">@Model.AnalysisResult!.CountDotNet</span>
+                                        </li>
+                                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                                            Только "ASP.NET"
+                                            <span class="badge bg-warning text-dark rounded-pill">@Model.AnalysisResult!.CountAspDotNet</span>
+                                        </li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+
+        <!-- Результаты анализа нецензурных слов -->
+        @if (Model.HasAnalysis && Model.AnalysisResult!.HasBadWords)
+        {
+            <div class="col-md-6">
+                <div class="card border-danger">
+                    <div class="card-header bg-danger text-white">
+                        <h5><i class="fas fa-ban"></i> Обнаружены нецензурные слова</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="alert alert-danger">
+                            <i class="fas fa-exclamation-circle"></i>
+                            <strong>Внимание!</strong> На странице обнаружена нецензурная лексика
+                        </div>
+
+                        <div class="mb-3">
+                            <h6>Статистика:</h6>
+                            <ul class="list-group">
+                                <li class="list-group-item d-flex justify-content-between align-items-center">
+                                    Всего вхождений
+                                    <span class="badge bg-danger rounded-pill">@Model.AnalysisResult!.TotalBadWordsCount</span>
+                                </li>
+                                <li class="list-group-item d-flex justify-content-between align-items-center">
+                                    Уникальных слов
+                                    <span class="badge bg-danger rounded-pill">@Model.AnalysisResult!.BadWordsFound.Count</span>
+                                </li>
+                            </ul>
+                        </div>
+
+                        <!-- Список найденных слов -->
+                        <div class="mb-3">
+                            <h6>Найденные слова:</h6>
+                            <div class="d-flex flex-wrap gap-2">
+                                @foreach (var word in Model.AnalysisResult!.BadWordsFound.OrderByDescending(w => w.Value).Take(15))
+                                {
+                                    <span class="badge bg-danger text-wrap text-start" style="max-width: 200px;">
+                                        @word.Key <span class="badge bg-light text-dark">@word.Value</span>
+                                    </span>
+                                }
+                                @if (Model.AnalysisResult!.BadWordsFound.Count > 15)
+                                {
+                                    <span class="badge bg-secondary">
+                                        +@(Model.AnalysisResult!.BadWordsFound.Count - 15) еще...
+                                    </span>
+                                }
+                            </div>
+                        </div>
+
+                        <!-- Контекст с нецензурными словами -->
+                        @if (Model.AnalysisResult!.BadWordsWithContext.Any())
+                        {
+                            <div class="mb-3">
+                                <button class="btn btn-sm btn-outline-danger"
+                                        type="button"
+                                        data-bs-toggle="collapse"
+                                        data-bs-target="#badWordsContext">
+                                    Показать контекст
+                                </button>
+
+                                <div class="collapse mt-2" id="badWordsContext">
+                                    <div class="card card-body bg-light">
+                                        <h6>Контекст найденных слов:</h6>
+                                        @foreach (var item in Model.AnalysisResult!.BadWordsWithContext.Take(5))
+                                        {
+                                            <div class="mb-2 p-2 border rounded">
+                                                <small class="text-muted">Слово: <strong>@item.Word</strong> (встречается @item.Count раз)</small>
+                                                <div class="mt-1" style="font-size: 0.9rem;">
+                                                    @Html.Raw(item.Context)
+                                                </div>
+                                            </div>
+                                        }
+                                        @if (Model.AnalysisResult!.BadWordsWithContext.Count > 5)
+                                        {
+                                            <div class="text-center">
+                                                <small class="text-muted">... и еще @(Model.AnalysisResult!.BadWordsWithContext.Count - 5) слов</small>
+                                            </div>
+                                        }
+                                    </div>
+                                </div>
+                            </div>
+                        }
+                    </div>
+                </div>
+            </div>
+        }
+        else if (Model.HasAnalysis)
+        {
+            <div class="col-md-6">
+                <div class="card border-success">
+                    <div class="card-header bg-success text-white">
+                        <h5><i class="fas fa-check-circle"></i> Проверка на нецензурные слова</h5>
+                    </div>
+                    <div class="card-body text-center">
+                        <div class="mb-3">
+                            <i class="fas fa-check text-success" style="font-size: 3rem;"></i>
+                        </div>
+                        <h5 class="text-success">Нецензурные слова не обнаружены</h5>
+                        <p class="text-muted">Страница прошла проверку по словарю из @Model.DictionaryInfo?.TotalWords слов</p>
+                    </div>
+                </div>
+            </div>
+        }
+
+        <!-- Таблица пользователей -->
+        <div class="col-12 mt-4">
+            <div class="card">
+                <div class="card-header bg-success text-white">
+                    <h5><i class="fas fa-users"></i> Пользователи системы</h5>
+                </div>
+                <div class="card-body">
+                    @if (Model.Users != null && Model.Users.Any())
+                    {
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>ID</th>
+                                        <th>Имя</th>
+                                        <th>Email</th>
+                                        <th>Дата регистрации</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var user in Model.Users)
+                                    {
+                                        <tr>
+                                            <td>@user.Id</td>
+                                            <td>
+                                                <strong>@user.Name</strong>
+                                                
+                                            </td>
+                                            
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="alert alert-warning">
+                            <i class="fas fa-exclamation-triangle"></i> Пользователи не найдены
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Styles {
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        .badge.bg-danger {
+            opacity: 0.9;
+        }
+
+            .badge.bg-danger:hover {
+                opacity: 1;
+                transform: scale(1.05);
+                transition: all 0.3s;
+            }
+
+        .card.border-danger {
+            border-width: 2px;
+            animation: pulse 2s infinite;
+        }
+
+        @@keyframes pulse {
+            0% {
+                box-shadow: 0 0 0 0 rgba(220, 53, 69, 0.7);
+            }
+
+            70% {
+                box-shadow: 0 0 0 10px rgba(220, 53, 69, 0);
+            }
+
+            100% {
+                box-shadow: 0 0 0 0 rgba(220, 53, 69, 0);
+            }
+        }
+    </style>
 }
