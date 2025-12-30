@@ -2,70 +2,137 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Net;
 using System.Text;
 using System.Text.RegularExpressions;
-using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace MonitoringServiceCore.Services
 {
-
     public class NetWordAnalyzer
     {
-
-        public  List<string> _badWords = new List<string>();
+        private List<string> _badWords = new List<string>();
         private readonly object _lockObject = new object();
         private bool _isDictionaryLoaded = false;
+
         public NetWordAnalyzer()
         {
             LoadBadWordsDictionary();
         }
-        
+
         private void LoadBadWordsDictionary()
         {
             try
             {
+                // Сначала пробуем загрузить из файла (если существует)
                 string dictionaryPath = @"C:\Users\Marat2\source\repos\MonitoringService\MonitoringServiceCore\Словарь нецензурных выражений\Русский матерный словарь.txt";
 
                 if (File.Exists(dictionaryPath))
                 {
-                    var lines = File.ReadAllLines(dictionaryPath, Encoding.UTF8);
-
-                    // Фильтруем и очищаем слова
-                   _badWords = lines
-                        .Where(line => !string.IsNullOrWhiteSpace(line))
-                        .Select(line => line.Trim().ToLower())
-                        .ToList();
-
-                    _isDictionaryLoaded = true;
-                    foreach (var word in _badWords)
+                    // Пробуем разные кодировки для русского текста
+                    Encoding[] encodingsToTry =
                     {
-                        Console.WriteLine(word);
+                        Encoding.GetEncoding(1251),     // Windows-1251 (самая распространенная)
+                        Encoding.UTF8,                  // UTF-8
+                        Encoding.GetEncoding(20866),    // KOI8-R
+                        Encoding.Default               // Системная кодировка
+                    };
+
+                    bool loadedFromFile = false;
+
+                    foreach (var encoding in encodingsToTry)
+                    {
+                        try
+                        {
+                            var lines = File.ReadAllLines(dictionaryPath, encoding);
+
+                            if (lines.Length > 0)
+                            {
+                                _badWords = lines
+                                    .Where(line => !string.IsNullOrWhiteSpace(line))
+                                    .Select(line => line.Trim().ToLower())
+                                    .ToList();
+
+                                if (_badWords.Count > 0)
+                                {
+                                    loadedFromFile = true;
+                                    Console.WriteLine($"Загружено {_badWords.Count} слов из файла. Кодировка: {encoding.EncodingName}");
+                                    break;
+                                }
+                            }
+                        }
+                        catch
+                        {
+                            continue;
+                        }
+                    }
+
+                    if (!loadedFromFile)
+                    {
+                        Console.WriteLine("Не удалось прочитать файл словаря. Используется enum.");
+                        LoadFromEnum();
                     }
                 }
                 else
                 {
                     Console.WriteLine($"Файл словаря не найден: {dictionaryPath}");
-                    // Можно загрузить стандартный набор слов
-                    LoadDefaultBadWords();
+                    Console.WriteLine("Используется enum BadWords");
+                    LoadFromEnum();
                 }
             }
             catch (Exception ex)
             {
                 Console.WriteLine($"Ошибка при загрузке словаря: {ex.Message}");
+                LoadFromEnum();
+            }
+
+            // Если все еще не загружено, загружаем из enum
+            if (_badWords.Count == 0)
+            {
+                LoadFromEnum();
+            }
+
+            _isDictionaryLoaded = true;
+        }
+
+        private void LoadFromEnum()
+        {
+            try
+            {
+                // Получаем все значения из enum BadWords
+                var enumValues = Enum.GetValues(typeof(BadWords));
+                _badWords = new List<string>();
+
+                foreach (BadWords word in enumValues)
+                {
+                    // Преобразуем enum в строку в нижнем регистре
+                    string wordStr = word.ToString().ToLower();
+                    _badWords.Add(wordStr);
+                }
+
+                Console.WriteLine($"Загружено {_badWords.Count} слов из enum BadWords");
+
+                // Выводим первые 10 слов для проверки
+                Console.WriteLine("Первые 10 слов из enum:");
+                foreach (var word in _badWords.Take(10))
+                {
+                    Console.WriteLine($"  - {word}");
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Ошибка при загрузке из enum: {ex.Message}");
                 LoadDefaultBadWords();
             }
         }
 
         private void LoadDefaultBadWords()
         {
-            // Резервный список, если файл не найден
+            // Резервный список на случай ошибок
             string[] defaultBadWords = {
-                "мат1", "мат2", "мат3", "брань1", "брань2" // Замените на реальные слова
+                "мат1", "мат2", "мат3", "брань1", "брань2"
             };
 
-             var   _badWords = defaultBadWords.ToList();
-            _isDictionaryLoaded = true;
+            _badWords = defaultBadWords.ToList();
+            Console.WriteLine($"Загружено {_badWords.Count} слов по умолчанию");
         }
 
         public AnalysisResult AnalyzeFile(string filePath, string searchWord = "NET")
@@ -108,12 +175,16 @@ namespace MonitoringServiceCore.Services
             result.CountAspDotNet = CountWithRegex(content, @"ASP\.NET", RegexOptions.IgnoreCase);
 
             // 2. Проверка на нецензурные слова
-            if (_isDictionaryLoaded)
+            if (_isDictionaryLoaded && _badWords.Count > 0)
             {
                 var badWordsAnalysis = AnalyzeBadWords(content);
                 result.BadWordsFound = badWordsAnalysis.FoundWords;
                 result.TotalBadWordsCount = badWordsAnalysis.TotalCount;
                 result.BadWordsWithContext = badWordsAnalysis.WordsWithContext;
+            }
+            else
+            {
+                Console.WriteLine("Предупреждение: Словарь нецензурных слов не загружен");
             }
 
             return result;
@@ -124,7 +195,10 @@ namespace MonitoringServiceCore.Services
             var analysis = new BadWordsAnalysis();
 
             if (!_isDictionaryLoaded || _badWords.Count == 0)
+            {
+                Console.WriteLine("Предупреждение: Анализ нецензурных слов невозможен - словарь пуст");
                 return analysis;
+            }
 
             string contentLower = content.ToLower();
 
@@ -132,25 +206,33 @@ namespace MonitoringServiceCore.Services
             {
                 foreach (var badWord in _badWords)
                 {
-                    // Ищем вхождения слова
-                    int count = CountWordOccurrences(contentLower, badWord);
-
-                    if (count > 0)
+                    try
                     {
-                        analysis.FoundWords[badWord] = count;
-                        analysis.TotalCount += count;
+                        // Ищем вхождения слова
+                        int count = CountWordOccurrences(contentLower, badWord);
 
-                        // Получаем контекст для первого вхождения
-                        var context = GetWordContext(content, badWord);
-                        if (context != null)
+                        if (count > 0)
                         {
-                            analysis.WordsWithContext.Add(new WordContext
+                            analysis.FoundWords[badWord] = count;
+                            analysis.TotalCount += count;
+
+                            // Получаем контекст для первого вхождения
+                            var context = GetWordContext(content, badWord);
+                            if (context != null)
                             {
-                                Word = badWord,
-                                Count = count,
-                                Context = context.ToString()
-                            });
+                                analysis.WordsWithContext.Add(new WordContext
+                                {
+                                    Word = badWord,
+                                    Count = count,
+                                    Context = context.Context
+                                });
+                            }
                         }
+                    }
+                    catch (Exception ex)
+                    {
+                        Console.WriteLine($"Ошибка при анализе слова '{badWord}': {ex.Message}");
+                        continue;
                     }
                 }
             }
@@ -168,7 +250,8 @@ namespace MonitoringServiceCore.Services
             int count = 0;
             int index = 0;
 
-            while ((index = text.IndexOf(word, index)) != -1)
+            // Оптимизированный поиск с учетом того, что текст уже в нижнем регистре
+            while ((index = text.IndexOf(word, index, StringComparison.Ordinal)) != -1)
             {
                 // Проверяем, что это отдельное слово
                 if (IsWholeWord(text, index, word.Length))
@@ -212,7 +295,7 @@ namespace MonitoringServiceCore.Services
             return new WordContext
             {
                 Word = word,
-                Count = 1, // Здесь только для контекста
+                Count = 1,
                 Context = $"...{context}..."
             };
         }
@@ -260,12 +343,63 @@ namespace MonitoringServiceCore.Services
             {
                 TotalWords = _badWords.Count,
                 IsLoaded = _isDictionaryLoaded,
+                Source = _badWords.Count > 0 ?
+                    (_badWords.Any(w => w.Contains("мат1") || w.Contains("брань1")) ?
+                    "Default" : "File or Enum") : "Not Loaded",
                 SampleWords = _badWords.Take(5).ToList()
             };
         }
+
+        // Дополнительные методы для работы со словарем
+        public List<string> GetAllBadWords()
+        {
+            return new List<string>(_badWords);
+        }
+
+        public bool ContainsBadWord(string text)
+        {
+            if (string.IsNullOrEmpty(text) || !_isDictionaryLoaded)
+                return false;
+
+            string textLower = text.ToLower();
+
+            foreach (var badWord in _badWords)
+            {
+                if (textLower.Contains(badWord))
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        public int CountBadWordsInText(string text)
+        {
+            if (string.IsNullOrEmpty(text) || !_isDictionaryLoaded)
+                return 0;
+
+            string textLower = text.ToLower();
+            int total = 0;
+
+            foreach (var badWord in _badWords)
+            {
+                int index = 0;
+                while ((index = textLower.IndexOf(badWord, index)) != -1)
+                {
+                    if (IsWholeWord(textLower, index, badWord.Length))
+                    {
+                        total++;
+                    }
+                    index += badWord.Length;
+                }
+            }
+
+            return total;
+        }
     }
 
-    // Новые классы для хранения результатов
+    // Классы для хранения результатов остаются без изменений
     public class BadWordsAnalysis
     {
         public Dictionary<string, int> FoundWords { get; set; } = new Dictionary<string, int>();
@@ -285,6 +419,7 @@ namespace MonitoringServiceCore.Services
     {
         public int TotalWords { get; set; }
         public bool IsLoaded { get; set; }
+        public string Source { get; set; } = string.Empty;
         public List<string> SampleWords { get; set; } = new List<string>();
     }
 

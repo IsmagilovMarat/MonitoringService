@@ -2,92 +2,438 @@
 @model IndexModel
 @{
     ViewData["Title"] = "Анализ сайтов";
-    Layout = "";
+    Layout = null;
 }
 
-@if (TempData["SuccessMessage"] != null)
-{
-    <div class="alert alert-success alert-dismissible fade show" role="alert">
-        @TempData["SuccessMessage"]
-        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-    </div>
-}
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] - Мониторинг сайтов</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
 
-@if (TempData["WarningMessage"] != null)
-{
-    <div class="alert alert-warning alert-dismissible fade show" role="alert">
-        <i class="fas fa-exclamation-triangle"></i> @TempData["WarningMessage"]
-        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-    </div>
-}
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            padding: 20px;
+        }
 
-<div class="container mt-4">
-    <!-- Информация о словаре -->
-    @if (Model.DictionaryInfo != null)
-    {
-        <div class="alert alert-info">
-            <i class="fas fa-book"></i>
-            Словарь нецензурных слов: <strong>@Model.DictionaryInfo.TotalWords</strong> слов загружено
-            @if (Model.DictionaryInfo.SampleWords.Any())
-            {
-                <span class="ms-2">
-                    (примеры: @string.Join(", ", Model.DictionaryInfo.SampleWords))
-                </span>
+        .main-container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .header {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+            padding: 25px 35px;
+            margin-bottom: 25px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: transform 0.3s ease;
+        }
+
+            .header:hover {
+                transform: translateY(-3px);
             }
-        </div>
-    }
 
-    <div class="row">
-        <!-- Форма для анализа сайта -->
-        <div class="col-md-6">
-            <div class="card">
-                <div class="card-header bg-primary text-white">
-                    <h5><i class="fas fa-search"></i> Анализ сайта</h5>
+        .header-left h1 {
+            color: #2c3e50;
+            font-weight: 600;
+            margin: 0;
+            font-size: 28px;
+        }
+
+        .header-left p {
+            color: #7f8c8d;
+            margin: 5px 0 0 0;
+            font-size: 14px;
+        }
+
+        .header-right {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .user-avatar {
+            width: 45px;
+            height: 45px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 20px;
+        }
+
+        .logout-btn {
+            background: transparent;
+            border: 2px solid #667eea;
+            color: #667eea;
+            padding: 8px 20px;
+            border-radius: 12px;
+            text-decoration: none;
+            font-weight: 500;
+            transition: all 0.3s ease;
+        }
+
+            .logout-btn:hover {
+                background: #667eea;
+                color: white;
+                transform: translateY(-2px);
+            }
+
+        .content-container {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+            padding: 30px;
+            transition: transform 0.3s ease;
+        }
+
+            .content-container:hover {
+                transform: translateY(-3px);
+            }
+
+        .alert {
+            border-radius: 12px;
+            border: none;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            animation: fadeIn 0.5s ease;
+        }
+
+        .alert-success {
+            background: linear-gradient(135deg, #38c172 0%, #2d995b 100%);
+            color: white;
+        }
+
+        .alert-warning {
+            background: linear-gradient(135deg, #ffed4a 0%, #f1c40f 100%);
+            color: #2c3e50;
+        }
+
+        .alert-info {
+            background: linear-gradient(135deg, #6cb2eb 0%, #3490dc 100%);
+            color: white;
+        }
+
+        .alert-danger {
+            background: linear-gradient(135deg, #e3342f 0%, #cc1f1a 100%);
+            color: white;
+        }
+
+        .card {
+            border: none;
+            border-radius: 16px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
+            transition: all 0.3s ease;
+            overflow: hidden;
+        }
+
+            .card:hover {
+                transform: translateY(-5px);
+                box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+            }
+
+        .card-header {
+            border-bottom: none;
+            padding: 20px;
+            font-weight: 600;
+            font-size: 18px;
+        }
+
+        .bg-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+        }
+
+        .bg-info {
+            background: linear-gradient(135deg, #6cb2eb 0%, #3490dc 100%) !important;
+        }
+
+        .bg-success {
+            background: linear-gradient(135deg, #38c172 0%, #2d995b 100%) !important;
+        }
+
+        .bg-danger {
+            background: linear-gradient(135deg, #e3342f 0%, #cc1f1a 100%) !important;
+        }
+
+        .card-body {
+            padding: 25px;
+        }
+
+        .form-control {
+            border: 2px solid #e0e0e0;
+            border-radius: 12px;
+            padding: 12px 18px;
+            font-size: 16px;
+            transition: all 0.3s ease;
+            background: #f8f9fa;
+        }
+
+            .form-control:focus {
+                border-color: #667eea;
+                box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+                background: white;
+            }
+
+        .btn {
+            border-radius: 12px;
+            padding: 12px 24px;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            border: none;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+            .btn-primary:hover {
+                transform: translateY(-2px);
+                box-shadow: 0 7px 14px rgba(102, 126, 234, 0.3);
+            }
+
+        .btn-outline-danger {
+            border: 2px solid #e3342f;
+            color: #e3342f;
+        }
+
+            .btn-outline-danger:hover {
+                background: #e3342f;
+                color: white;
+                transform: translateY(-2px);
+            }
+
+        .list-group-item {
+            border: 1px solid #e0e0e0;
+            padding: 15px 20px;
+            transition: all 0.3s ease;
+        }
+
+            .list-group-item:hover {
+                background-color: #f8f9fa;
+                transform: translateX(5px);
+            }
+
+        .badge {
+            border-radius: 10px;
+            padding: 6px 12px;
+            font-weight: 500;
+        }
+
+            .badge.bg-danger {
+                background: linear-gradient(135deg, #e3342f 0%, #cc1f1a 100%) !important;
+            }
+
+            .badge.bg-primary {
+                background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+            }
+
+            .badge.bg-secondary {
+                background: linear-gradient(135deg, #a0aec0 0%, #718096 100%) !important;
+            }
+
+            .badge.bg-warning {
+                background: linear-gradient(135deg, #ffed4a 0%, #f1c40f 100%) !important;
+                color: #2c3e50;
+            }
+
+        .table {
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+            .table thead th {
+                background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                color: white;
+                border: none;
+                padding: 15px;
+                font-weight: 500;
+            }
+
+            .table tbody tr {
+                transition: all 0.3s ease;
+            }
+
+                .table tbody tr:hover {
+                    background-color: #f8f9fa;
+                    transform: translateX(5px);
+                }
+
+        .floating-icon {
+            position: fixed;
+            font-size: 24px;
+            color: rgba(255, 255, 255, 0.1);
+            animation: float 6s ease-in-out infinite;
+            z-index: -1;
+        }
+
+            .floating-icon:nth-child(1) {
+                top: 10%;
+                left: 5%;
+            }
+
+            .floating-icon:nth-child(2) {
+                top: 15%;
+                right: 8%;
+                animation-delay: 1s;
+            }
+
+            .floating-icon:nth-child(3) {
+                bottom: 20%;
+                left: 10%;
+                animation-delay: 2s;
+            }
+
+            .floating-icon:nth-child(4) {
+                bottom: 15%;
+                right: 5%;
+                animation-delay: 3s;
+            }
+
+            .floating-icon:nth-child(5) {
+                top: 40%;
+                left: 15%;
+                animation-delay: 4s;
+            }
+
+      
+        
+
+    </style>
+</head>
+<body>
+    <!-- Декоративные элементы на фоне -->
+    <div class="floating-icon"><i class="fas fa-shield-alt"></i></div>
+    <div class="floating-icon"><i class="fas fa-search"></i></div>
+    <div class="floating-icon"><i class="fas fa-chart-bar"></i></div>
+    <div class="floating-icon"><i class="fas fa-lock"></i></div>
+    <div class="floating-icon"><i class="fas fa-globe"></i></div>
+
+    <div class="main-container">
+        <!-- Шапка -->
+        <div class="header">
+            <div class="header-left">
+                <h1><i class="fas fa-chart-line"></i> Мониторинг сайтов</h1>
+                <p>Анализ на наличие .NET терминов и нецензурной лексики</p>
+            </div>
+            <div class="header-right">
+                <div class="user-info">
+                    <div class="user-avatar">
+                        <i class="fas fa-user"></i>
+                    </div>
+                    <div>
+                        <div style="font-weight: 500; color: #2c3e50;">Администратор</div>
+                        <small style="color: #7f8c8d;">@DateTime.Now.ToString("dd.MM.yyyy HH:mm")</small>
+                    </div>
                 </div>
-                <div class="card-body">
-                    <form method="post" asp-page-handler="AnalyzeSite">
-                        <div class="mb-3">
-                            <label for="siteUrl" class="form-label">URL сайта для анализа:</label>
-                            <input type="url"
-                                   class="form-control @(ViewData.ModelState["SiteUrl"]?.Errors.Count > 0 ? "is-invalid" : "")"
-                                   id="siteUrl"
-                                   asp-for="SiteUrl"
-                                   placeholder="https://example.com/page.html">
-                            @if (ViewData.ModelState["SiteUrl"]?.Errors.Count > 0)
+                <a href="/Login" class="logout-btn">
+                    <i class="fas fa-sign-out-alt"></i> Выйти
+                </a>
+            </div>
+        </div>
+
+        <!-- Основной контент -->
+        <div class="content-container">
+            @if (TempData["SuccessMessage"] != null)
+            {
+                <div class="alert alert-success alert-dismissible fade show" role="alert">
+                    <i class="fas fa-check-circle"></i> @TempData["SuccessMessage"]
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            }
+
+            @if (TempData["WarningMessage"] != null)
+            {
+                <div class="alert alert-warning alert-dismissible fade show" role="alert">
+                    <i class="fas fa-exclamation-triangle"></i> @TempData["WarningMessage"]
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            }
+
+            <!-- Информация о словаре -->
+            @if (Model.DictionaryInfo != null)
+            {
+                <div class="alert alert-info mb-4">
+                    <i class="fas fa-book"></i>
+                    Словарь нецензурных слов: <strong>@Model.DictionaryInfo.TotalWords</strong> слов загружено
+                </div>
+            }
+
+            <div class="row">
+                <!-- Форма для анализа сайта -->
+                <div class="col-md-6">
+                    <div class="card mb-4">
+                        <div class="card-header bg-primary text-white">
+                            <h5 class="mb-0"><i class="fas fa-search"></i> Анализ сайта</h5>
+                        </div>
+                        <div class="card-body">
+                            <form method="post" asp-page-handler="AnalyzeSite" id="analysisForm">
+                                <div class="mb-3">
+                                    <label for="siteUrl" class="form-label">URL сайта для анализа:</label>
+                                    <input type="url"
+                                           class="form-control @(ViewData.ModelState["SiteUrl"]?.Errors.Count > 0 ? "is-invalid" : "")"
+                                           id="siteUrl"
+                                           asp-for="SiteUrl"
+                                           placeholder="https://example.com/page.html">
+                                    @if (ViewData.ModelState["SiteUrl"]?.Errors.Count > 0)
+                                    {
+                                        <div class="invalid-feedback">
+                                            @ViewData.ModelState["SiteUrl"]?.Errors.First().ErrorMessage
+                                        </div>
+                                    }
+                                    <div class="form-text mt-2">
+                                        <i class="fas fa-info-circle"></i> Анализ на наличие слов .NET и нецензурной лексики
+                                    </div>
+                                </div>
+
+                                <button type="submit" class="btn btn-primary" id="analyzeBtn">
+                                    <i class="fas fa-search"></i> Проанализировать сайт
+                                    <div class="loading" id="loadingSpinner"></div>
+                                </button>
+                            </form>
+
+                            @if (!string.IsNullOrEmpty(Model.ErrorMessage))
                             {
-                                <div class="invalid-feedback">
-                                    @ViewData.ModelState["SiteUrl"]?.Errors.First().ErrorMessage
+                                <div class="alert alert-danger mt-3">
+                                    <i class="fas fa-times-circle"></i> @Model.ErrorMessage
                                 </div>
                             }
-                            <div class="form-text">Анализ на наличие слов .NET и нецензурной лексики</div>
                         </div>
-
-                        <button type="submit" class="btn btn-primary">
-                            <i class="fas fa-search"></i> Проанализировать сайт
-                        </button>
-                    </form>
-
-                    @if (!string.IsNullOrEmpty(Model.ErrorMessage))
-                    {
-                        <div class="alert alert-danger mt-3">
-                            @Model.ErrorMessage
-                        </div>
-                    }
-                </div>
-            </div>
-
-            <!-- Результаты анализа .NET -->
-            @if (Model.HasAnalysis)
-            {
-                <div class="card mt-4">
-                    <div class="card-header bg-info text-white">
-                        <h5><i class="fas fa-code"></i> Результаты анализа .NET</h5>
                     </div>
-                    <div class="card-body">
-                        <div class="row">
-                            <div class="col-md-6">
+
+                    <!-- Результаты анализа .NET -->
+                    @if (Model.HasAnalysis)
+                    {
+                        <div class="card">
+                            <div class="card-header bg-info text-white">
+                                <h5 class="mb-0"><i class="fas fa-code"></i> Результаты анализа .NET</h5>
+                            </div>
+                            <div class="card-body">
                                 <div class="mb-3">
-                                    <h6>Результаты:</h6>
+                                    <h6><i class="fas fa-chart-pie"></i> Результаты:</h6>
                                     <ul class="list-group">
                                         <li class="list-group-item d-flex justify-content-between align-items-center">
                                             Все варианты (.NET, NET)
@@ -105,190 +451,222 @@
                                 </div>
                             </div>
                         </div>
-                    </div>
+                    }
                 </div>
-            }
-        </div>
 
-        <!-- Результаты анализа нецензурных слов -->
-        @if (Model.HasAnalysis && Model.AnalysisResult!.HasBadWords)
-        {
-            <div class="col-md-6">
-                <div class="card border-danger">
-                    <div class="card-header bg-danger text-white">
-                        <h5><i class="fas fa-ban"></i> Обнаружены нецензурные слова</h5>
-                    </div>
-                    <div class="card-body">
-                        <div class="alert alert-danger">
-                            <i class="fas fa-exclamation-circle"></i>
-                            <strong>Внимание!</strong> На странице обнаружена нецензурная лексика
-                        </div>
-
-                        <div class="mb-3">
-                            <h6>Статистика:</h6>
-                            <ul class="list-group">
-                                <li class="list-group-item d-flex justify-content-between align-items-center">
-                                    Всего вхождений
-                                    <span class="badge bg-danger rounded-pill">@Model.AnalysisResult!.TotalBadWordsCount</span>
-                                </li>
-                                <li class="list-group-item d-flex justify-content-between align-items-center">
-                                    Уникальных слов
-                                    <span class="badge bg-danger rounded-pill">@Model.AnalysisResult!.BadWordsFound.Count</span>
-                                </li>
-                            </ul>
-                        </div>
-
-                        <!-- Список найденных слов -->
-                        <div class="mb-3">
-                            <h6>Найденные слова:</h6>
-                            <div class="d-flex flex-wrap gap-2">
-                                @foreach (var word in Model.AnalysisResult!.BadWordsFound.OrderByDescending(w => w.Value).Take(15))
-                                {
-                                    <span class="badge bg-danger text-wrap text-start" style="max-width: 200px;">
-                                        @word.Key <span class="badge bg-light text-dark">@word.Value</span>
-                                    </span>
-                                }
-                                @if (Model.AnalysisResult!.BadWordsFound.Count > 15)
-                                {
-                                    <span class="badge bg-secondary">
-                                        +@(Model.AnalysisResult!.BadWordsFound.Count - 15) еще...
-                                    </span>
-                                }
+                <!-- Результаты анализа нецензурных слов -->
+                @if (Model.HasAnalysis && Model.AnalysisResult!.HasBadWords)
+                {
+                    <div class="col-md-6">
+                        <div class="card border-danger mb-4">
+                            <div class="card-header bg-danger text-white">
+                                <h5 class="mb-0"><i class="fas fa-ban"></i> Обнаружены нецензурные слова</h5>
                             </div>
-                        </div>
+                            <div class="card-body">
+                                <div class="alert alert-danger mb-3">
+                                    <i class="fas fa-exclamation-circle"></i>
+                                    <strong>Внимание!</strong> На странице обнаружена нецензурная лексика
+                                </div>
 
-                        <!-- Контекст с нецензурными словами -->
-                        @if (Model.AnalysisResult!.BadWordsWithContext.Any())
-                        {
-                            <div class="mb-3">
-                                <button class="btn btn-sm btn-outline-danger"
-                                        type="button"
-                                        data-bs-toggle="collapse"
-                                        data-bs-target="#badWordsContext">
-                                    Показать контекст
-                                </button>
+                                <div class="mb-3">
+                                    <h6><i class="fas fa-chart-bar"></i> Статистика:</h6>
+                                    <ul class="list-group">
+                                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                                            Всего вхождений
+                                            <span class="badge bg-danger rounded-pill">@Model.AnalysisResult!.TotalBadWordsCount</span>
+                                        </li>
+                                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                                            Уникальных слов
+                                            <span class="badge bg-danger rounded-pill">@Model.AnalysisResult!.BadWordsFound.Count</span>
+                                        </li>
+                                    </ul>
+                                </div>
 
-                                <div class="collapse mt-2" id="badWordsContext">
-                                    <div class="card card-body bg-light">
-                                        <h6>Контекст найденных слов:</h6>
-                                        @foreach (var item in Model.AnalysisResult!.BadWordsWithContext.Take(5))
+                                <!-- Список найденных слов -->
+                                <div class="mb-3">
+                                    <h6><i class="fas fa-list"></i> Найденные слова:</h6>
+                                    <div class="d-flex flex-wrap gap-2">
+                                        @foreach (var word in Model.AnalysisResult!.BadWordsFound.OrderByDescending(w => w.Value).Take(15))
                                         {
-                                            <div class="mb-2 p-2 border rounded">
-                                                <small class="text-muted">Слово: <strong>@item.Word</strong> (встречается @item.Count раз)</small>
-                                                <div class="mt-1" style="font-size: 0.9rem;">
-                                                    @Html.Raw(item.Context)
-                                                </div>
-                                            </div>
+                                            <span class="badge bg-danger text-wrap text-start" style="max-width: 200px;">
+                                                @word.Key <span class="badge bg-light text-dark">@word.Value</span>
+                                            </span>
                                         }
-                                        @if (Model.AnalysisResult!.BadWordsWithContext.Count > 5)
+                                        @if (Model.AnalysisResult!.BadWordsFound.Count > 15)
                                         {
-                                            <div class="text-center">
-                                                <small class="text-muted">... и еще @(Model.AnalysisResult!.BadWordsWithContext.Count - 5) слов</small>
-                                            </div>
+                                            <span class="badge bg-secondary">
+                                                +@(Model.AnalysisResult!.BadWordsFound.Count - 15) еще...
+                                            </span>
                                         }
                                     </div>
                                 </div>
-                            </div>
-                        }
-                    </div>
-                </div>
-            </div>
-        }
-        else if (Model.HasAnalysis)
-        {
-            <div class="col-md-6">
-                <div class="card border-success">
-                    <div class="card-header bg-success text-white">
-                        <h5><i class="fas fa-check-circle"></i> Проверка на нецензурные слова</h5>
-                    </div>
-                    <div class="card-body text-center">
-                        <div class="mb-3">
-                            <i class="fas fa-check text-success" style="font-size: 3rem;"></i>
-                        </div>
-                        <h5 class="text-success">Нецензурные слова не обнаружены</h5>
-                        <p class="text-muted">Страница прошла проверку по словарю из @Model.DictionaryInfo?.TotalWords слов</p>
-                    </div>
-                </div>
-            </div>
-        }
 
-        <!-- Таблица пользователей -->
-        <div class="col-12 mt-4">
-            <div class="card">
-                <div class="card-header bg-success text-white">
-                    <h5><i class="fas fa-users"></i> Пользователи системы</h5>
-                </div>
-                <div class="card-body">
-                    @if (Model.Users != null && Model.Users.Any())
-                    {
-                        <div class="table-responsive">
-                            <table class="table table-hover">
-                                <thead class="table-light">
-                                    <tr>
-                                        <th>ID</th>
-                                        <th>Имя</th>
-                                        <th>Email</th>
-                                        <th>Дата регистрации</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    @foreach (var user in Model.Users)
-                                    {
-                                        <tr>
-                                            <td>@user.Id</td>
-                                            <td>
-                                                <strong>@user.Name</strong>
-                                                
-                                            </td>
-                                            
-                                        </tr>
-                                    }
-                                </tbody>
-                            </table>
+                                <!-- Контекст с нецензурными словами -->
+                                @if (Model.AnalysisResult!.BadWordsWithContext.Any())
+                                {
+                                    <div class="mb-3">
+                                        <button class="btn btn-sm btn-outline-danger"
+                                                type="button"
+                                                data-bs-toggle="collapse"
+                                                data-bs-target="#badWordsContext">
+                                            <i class="fas fa-eye"></i> Показать контекст
+                                        </button>
+
+                                        <div class="collapse mt-2" id="badWordsContext">
+                                            <div class="card card-body bg-light">
+                                                <h6><i class="fas fa-comment"></i> Контекст найденных слов:</h6>
+                                                @foreach (var item in Model.AnalysisResult!.BadWordsWithContext.Take(5))
+                                                {
+                                                    <div class="mb-2 p-2 border rounded">
+                                                        <small class="text-muted">Слово: <strong>@item.Word</strong> (встречается @item.Count раз)</small>
+                                                        <div class="mt-1" style="font-size: 0.9rem;">
+                                                            @Html.Raw(item.Context)
+                                                        </div>
+                                                    </div>
+                                                }
+                                                @if (Model.AnalysisResult!.BadWordsWithContext.Count > 5)
+                                                {
+                                                    <div class="text-center">
+                                                        <small class="text-muted">... и еще @(Model.AnalysisResult!.BadWordsWithContext.Count - 5) слов</small>
+                                                    </div>
+                                                }
+                                            </div>
+                                        </div>
+                                    </div>
+                                }
+                            </div>
                         </div>
-                    }
-                    else
-                    {
-                        <div class="alert alert-warning">
-                            <i class="fas fa-exclamation-triangle"></i> Пользователи не найдены
+                    </div>
+                }
+                else if (Model.HasAnalysis)
+                {
+                    <div class="col-md-6">
+                        <div class="card border-success">
+                            <div class="card-header bg-success text-white">
+                                <h5 class="mb-0"><i class="fas fa-check-circle"></i> Проверка на нецензурные слова</h5>
+                            </div>
+                            <div class="card-body text-center">
+                                <div class="mb-3">
+                                    <i class="fas fa-check text-success" style="font-size: 3rem;"></i>
+                                </div>
+                                <h5 class="text-success">Нецензурные слова не обнаружены</h5>
+                                <p class="text-muted">Страница прошла проверку по словарю из @Model.DictionaryInfo?.TotalWords слов</p>
+                            </div>
                         </div>
-                    }
+                    </div>
+                }
+
+                <!-- Таблица пользователей -->
+                <div class="col-12 mt-4">
+                    <div class="card">
+                        <div class="card-header bg-success text-white">
+                            <h5 class="mb-0"><i class="fas fa-users"></i> Пользователи системы</h5>
+                        </div>
+                        <div class="card-body">
+                            @if (Model.Users != null && Model.Users.Any())
+                            {
+                                <div class="table-responsive">
+                                    <table class="table table-hover">
+                                        <thead class="table-light">
+                                            <tr>
+                                                <th>ID</th>
+                                                <th>Имя</th>
+                                                <th>Email</th>
+                                                <th>Дата регистрации</th>
+                                                <th>Статус</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            @foreach (var user in Model.Users)
+                                            {
+                                                <tr>
+                                                    <td><strong>#@user.Id</strong></td>
+                                                    <td>
+                                                        <strong>@user.Name</strong>
+                                                    </td>
+                                                   
+                                                    <td>
+                                                        <span class="badge bg-primary">Активен</span>
+                                                    </td>
+                                                </tr>
+                                            }
+                                        </tbody>
+                                    </table>
+                                </div>
+                            }
+                            else
+                            {
+                                <div class="alert alert-warning text-center">
+                                    <i class="fas fa-exclamation-triangle"></i> Пользователи не найдены
+                                </div>
+                            }
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
-</div>
 
-@section Styles {
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <style>
-        .badge.bg-danger {
-            opacity: 0.9;
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Анимация загрузки при анализе сайта
+        document.getElementById('analysisForm')?.addEventListener('submit', function(e) {
+            const analyzeBtn = document.getElementById('analyzeBtn');
+            const loadingSpinner = document.getElementById('loadingSpinner');
+
+            if (analyzeBtn && loadingSpinner) {
+                analyzeBtn.disabled = true;
+                analyzeBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Анализ...';
+            }
+        });
+
+        // Плавное появление элементов
+        document.addEventListener('DOMContentLoaded', function() {
+            const elements = document.querySelectorAll('.header, .content-container, .card');
+            elements.forEach((el, index) => {
+                el.style.opacity = '0';
+                el.style.transform = 'translateY(20px)';
+
+                setTimeout(() => {
+                    el.style.transition = 'opacity 0.5s ease, transform 0.5s ease';
+                    el.style.opacity = '1';
+                    el.style.transform = 'translateY(0)';
+                }, index * 100);
+            });
+
+            // Автофокус на поле ввода URL
+            const siteUrlInput = document.getElementById('siteUrl');
+            if (siteUrlInput) {
+                setTimeout(() => {
+                    siteUrlInput.focus();
+                }, 500);
+            }
+        });
+
+        // Обновление времени в шапке
+        function updateTime() {
+            const now = new Date();
+            const timeElements = document.querySelectorAll('.header-right small');
+            if (timeElements.length > 0) {
+                const timeString = now.toLocaleDateString('ru-RU') + ' ' + now.toLocaleTimeString('ru-RU');
+                timeElements[0].textContent = timeString;
+            }
         }
 
-            .badge.bg-danger:hover {
-                opacity: 1;
-                transform: scale(1.05);
-                transition: all 0.3s;
-            }
+        setInterval(updateTime, 60000); // Обновлять каждую минуту
+        updateTime(); // Инициализация
 
-        .card.border-danger {
-            border-width: 2px;
-            animation: pulse 2s infinite;
-        }
+        // Эффект при наведении на элементы
+        const cards = document.querySelectorAll('.card');
+        cards.forEach(card => {
+            card.addEventListener('mouseenter', function() {
+                this.style.transform = 'translateY(-5px)';
+            });
 
-        @@keyframes pulse {
-            0% {
-                box-shadow: 0 0 0 0 rgba(220, 53, 69, 0.7);
-            }
-
-            70% {
-                box-shadow: 0 0 0 10px rgba(220, 53, 69, 0);
-            }
-
-            100% {
-                box-shadow: 0 0 0 0 rgba(220, 53, 69, 0);
-            }
-        }
-    </style>
-}
+            card.addEventListener('mouseleave', function() {
+                this.style.transform = 'translateY(0)';
+            });
+        });
+    </script>
+</body>
+</html>

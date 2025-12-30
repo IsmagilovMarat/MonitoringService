@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using MonitoringServiceCore.Database.dbContext;
@@ -7,10 +8,12 @@ using System.ComponentModel.DataAnnotations;
 
 namespace MonitoringServiceCore.Pages
 {
+    [Authorize]
     public class IndexModel : PageModel
     {
         private readonly MonitoringDbContext _dbContext;
         private readonly SiteDataDownloader _siteDataDownloader;
+
         private readonly NetWordAnalyzer _netWordAnalyzer;
 
         public List<User> Users { get; set; } = new List<User>();

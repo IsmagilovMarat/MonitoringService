@@ -57,5 +57,4 @@ using (MonitoringDbContext Monitiordb = new MonitoringDbContext())
     Monitiordb.SaveChanges();
 }
 // получение данных
-
 app.Run();
