@@ -1,0 +1,14 @@
+﻿@page "MainPage"
+@model MonitoringServiceCore.Pages.UsersMainPageModel
+@{
+}
+
+<div> 
+    Сайты ебать: @{
+        foreach (var i in Model.SitesList)
+        {
+        <div> URl: @i.Url </div>
+        <div> URl: @i.DomainUrl </div>
+    }
+    }
+</div>

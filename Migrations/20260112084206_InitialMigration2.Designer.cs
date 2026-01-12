@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using MonitoringServiceCore.Database.dbContext;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
@@ -11,9 +12,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace MonitoringServiceCore.Migrations
 {
     [DbContext(typeof(MonitoringDbContext))]
-    partial class MonitoringDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260112084206_InitialMigration2")]
+    partial class InitialMigration2
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -31,9 +34,6 @@ namespace MonitoringServiceCore.Migrations
                     b.Property<string>("RoleName")
                         .IsRequired()
                         .HasColumnType("text");
-
-                    b.Property<bool>("isAdmin")
-                        .HasColumnType("boolean");
 
                     b.HasKey("Id");
 
@@ -76,13 +76,21 @@ namespace MonitoringServiceCore.Migrations
                     b.Property<DateTime>("AnalyzedDate")
                         .HasColumnType("timestamp with time zone");
 
-                    b.Property<int>("CountOfViolations")
+                    b.Property<int>("AspNetCount")
                         .HasColumnType("integer");
 
-                    b.Property<string>("DomainUrl")
-                        .IsRequired()
-                        .HasMaxLength(450)
-                        .HasColumnType("character varying(450)");
+                    b.Property<string>("Content")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.Property<int>("DotNetCount")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("NetCount")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("TotalCharacters")
+                        .HasColumnType("integer");
 
                     b.Property<string>("Url")
                         .IsRequired()
@@ -90,6 +98,10 @@ namespace MonitoringServiceCore.Migrations
                         .HasColumnType("character varying(500)");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("AnalyzedDate");
+
+                    b.HasIndex("Url");
 
                     b.ToTable("SiteAnalyses");
                 });

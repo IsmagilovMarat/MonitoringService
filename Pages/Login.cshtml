@@ -228,10 +228,7 @@
                 animation-delay: 4s;
             }
 
-        /* Адаптивность */
-        
-
-        /* Эффект загрузки */
+   
        
 
        
@@ -254,10 +251,10 @@
             <p>Мониторинг сайтов на наличие нецензурной лексики</p>
         </div>
 
-        @if (Model.ErrorMessage != null)
+        @if (Model != null)
         {
             <div class="error-message">
-                <i class="fas fa-exclamation-circle"></i> @Model.ErrorMessage
+                <i class="fas fa-exclamation-circle"></i> Не найдено(
             </div>
         }
 

@@ -8,17 +8,16 @@ namespace MonitoringServiceCore.Pages
 {
     public class LoginModel : PageModel
     {
-        private readonly AuthService _authService;
+        private  AuthorizeService _authService;
 
         [BindProperty]
-        public string Username { get; set; }
+        public required string Username { get; set; }
 
         [BindProperty]
-        public string Password { get; set; }
+        public required string Password { get; set; }
 
-        public string ErrorMessage { get; set; }
 
-        public LoginModel(AuthService authService)
+        public LoginModel(AuthorizeService authService)
         {
             _authService = authService;
         }
@@ -30,34 +29,49 @@ namespace MonitoringServiceCore.Pages
         public async Task<IActionResult> OnPostAsync()
         {
             // Проверяем пользователя
-            var user = _authService.CheckUser(Username, Password);
+
+              var user = _authService.GetUserFromDb(Username, Password);
 
             if (user == null)
             {
-                ErrorMessage = "Неверное имя пользователя или пароль";
                 return Page();
             }
+            string userRoleName;
 
-            // Создаем простые claims
+            if(user.UserRole.RoleName != null)
+            {
+                 userRoleName = user.UserRole.RoleName.ToString();
+            }
+            else
+            {
+                 userRoleName = "";
+            }
+
+
+
             var claims = new List<Claim>
             {
                 new Claim(ClaimTypes.Name, user.Name),
                 new Claim("UserId", user.Id.ToString()),
-                new Claim("Role", user.UserRole?.RoleName ?? "Client")
+                new Claim("Role", user.UserRole?.RoleName?? "no userRoleName")
             };
 
-            // Создаем identity
             var identity = new ClaimsIdentity(claims, "SimpleCookie");
             var principal = new ClaimsPrincipal(identity);
 
-            // Входим в систему
             await HttpContext.SignInAsync("SimpleCookie", principal, new AuthenticationProperties
             {
-                IsPersistent = true // Куки сохраняются после закрытия браузера
+                IsPersistent = true 
             });
+            if (userRoleName == "Admin")
+            {
+                return RedirectToPage("Index");
 
-            // Перенаправляем на главную
-            return RedirectToPage("/Index");
+            }
+            else
+            {
+                return RedirectToPage("UsersMainPage");
+            }
         }
     }
 }

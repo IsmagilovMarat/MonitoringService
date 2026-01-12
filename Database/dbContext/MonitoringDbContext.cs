@@ -8,30 +8,36 @@ namespace MonitoringServiceCore.Database.dbContext
 {
     public class MonitoringDbContext : DbContext
     {
+         static int count = 0;
         public MonitoringDbContext()
         {
-            //Database.EnsureCreated();
+            if (count < 1)
+            {
+                Database.EnsureDeleted();
+                Database.EnsureCreated();
+            }
             
+            count = count+1;
         }
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
-           optionsBuilder.UseNpgsql("Host=localhost;Port=5432;Database=diplomDb;Username=postgres;Password=marat321");
+           optionsBuilder.UseNpgsql("Host=localhost;Port=5432;Database=diplomDb;Username=postgres;Password=postgres");
         }
         protected override void OnModelCreating(ModelBuilder modelbuilder)
         {
             modelbuilder.Entity<User>()
                   .HasOne(u => u.UserRole)
-                  .WithMany(r => r.UsersList)
+                  .WithMany(r=>r.UsersList)
                   .HasForeignKey(u => u.RoleId);
+
             modelbuilder.Entity<SiteAnalysis>(entity =>
             {
                 entity.HasKey(e => e.Id);
+                entity.Property(e => e.DomainUrl).HasMaxLength(450);
                 entity.Property(e => e.Url).IsRequired().HasMaxLength(500);
                 entity.Property(e => e.AnalyzedDate).IsRequired();
-                entity.Property(e => e.Content).HasMaxLength(500);
 
-                entity.HasIndex(e => e.Url);
-                entity.HasIndex(e => e.AnalyzedDate);
+                
             });
 
         }
