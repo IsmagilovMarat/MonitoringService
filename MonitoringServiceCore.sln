@@ -1,0 +1,25 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.14.36623.8
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MonitoringServiceCore", "MonitoringServiceCore.csproj", "{56D19E50-B5BE-49AC-6DC3-D6F8F8B08B3D}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{56D19E50-B5BE-49AC-6DC3-D6F8F8B08B3D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{56D19E50-B5BE-49AC-6DC3-D6F8F8B08B3D}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{56D19E50-B5BE-49AC-6DC3-D6F8F8B08B3D}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{56D19E50-B5BE-49AC-6DC3-D6F8F8B08B3D}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {295C959E-0FAB-4CFD-B03E-0A82387D596D}
+	EndGlobalSection
+EndGlobal

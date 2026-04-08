@@ -11,6 +11,7 @@ builder.Services.AddSingleton<MonitoringDbContext>();
 builder.Services.AddSingleton<AuthorizeService>();
 builder.Services.AddHttpClient<SiteDataDownloader>();
 builder.Services.AddSingleton<NetWordAnalyzer>();
+builder.Services.AddSingleton<GoogleFormsDetector>();
 
 builder.Services.AddAuthentication("SimpleCookie")
     .AddCookie("SimpleCookie", options =>
@@ -61,3 +62,5 @@ using (MonitoringDbContext Monitiordb = new MonitoringDbContext())
     Monitiordb.SaveChanges();
 }
 app.Run();
+//https://www.geeksforgeeks.org/websites-apps/how-to-add-a-link-to-a-google-form/
+//https://ru.wikipedia.org/wiki/Гады
