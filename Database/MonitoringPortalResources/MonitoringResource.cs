@@ -9,8 +9,8 @@ namespace MonitoringServiceCore.Database.MonitoringPortalResources
         public Guid PortalId { get; set; }
         public string Name { get; set; }
         public string Url { get; set; }
-        public ResourceType Type { get; set; } // Page, API, RSS, File
-        public string? SelectorPath { get; set; } // XPath/CSS селектор
+        public ResourceType Type { get; set; } 
+        public string? SelectorPath { get; set; }
         public string? ParserConfiguration { get; set; }
         public int Priority { get; set; }
         public bool IsActive { get; set; }

@@ -41,7 +41,6 @@ namespace MonitoringServiceCore.Database.dbContext
             });
 
         }
-        //пользователи и безопасность
         public DbSet<User> Users { get; set; }
         public DbSet<Role> Roles { get; set; }
         public DbSet<SiteAnalysis> SiteAnalyses { get; set; }

@@ -21,16 +21,13 @@ namespace MonitoringServiceCore.Services
 
             try
             {
-                // Устанавливаем User-Agent для имитации браузера
                 _httpClient.DefaultRequestHeaders.UserAgent.ParseAdd(
                     "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36");
 
-                // Получаем HTML-контент
                 string html = await _httpClient.GetStringAsync(url);
 
                 Console.WriteLine($"Успешно загружено {html.Length} символов с {url}");
 
-                // Если указан путь к файлу, сохраняем
                 if (!string.IsNullOrEmpty(filePath))
                 {
                     await SaveToFileAsync(html, filePath);
@@ -61,7 +58,6 @@ namespace MonitoringServiceCore.Services
 
             try
             {
-                // Создаем директорию, если ее нет
                 string directory = Path.GetDirectoryName(filePath);
                 if (!string.IsNullOrEmpty(directory) && !Directory.Exists(directory))
                 {

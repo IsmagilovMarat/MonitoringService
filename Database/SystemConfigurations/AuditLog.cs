@@ -7,11 +7,11 @@ namespace MonitoringService.Database.SystemConfigurations
     {
         public Guid Id { get; set; }
         public Guid? UserId { get; set; }
-        public string Action { get; set; } // Created, Updated, Deleted
+        public string Action { get; set; } 
         public string EntityType { get; set; }
         public Guid EntityId { get; set; }
-        public string? OldValues { get; set; } // JSON
-        public string? NewValues { get; set; } // JSON
+        public string? OldValues { get; set; } 
+        public string? NewValues { get; set; }
         public DateTime Timestamp { get; set; }
         public string? IpAddress { get; set; }
 

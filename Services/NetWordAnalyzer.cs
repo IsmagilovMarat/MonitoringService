@@ -18,18 +18,16 @@ namespace MonitoringServiceCore.Services
         {
             try
             {
-                // Сначала пробуем загрузить из файла (если существует)
                 string dictionaryPath = @"C:\Users\Marat2\source\repos\MonitoringService\MonitoringServiceCore\Словарь нецензурных выражений\Русский матерный словарь.txt";
 
                 if (File.Exists(dictionaryPath))
                 {
-                    // Пробуем разные кодировки для русского текста
                     Encoding[] encodingsToTry =
                     {
-                        Encoding.GetEncoding(1251),     // Windows-1251 (самая распространенная)
-                        Encoding.UTF8,                  // UTF-8
-                        Encoding.GetEncoding(20866),    // KOI8-R
-                        Encoding.Default               // Системная кодировка
+                        Encoding.GetEncoding(1251),     
+                        Encoding.UTF8,                  
+                        Encoding.GetEncoding(20866),    
+                        Encoding.Default              
                     };
 
                     bool loadedFromFile = false;
@@ -80,7 +78,6 @@ namespace MonitoringServiceCore.Services
                 LoadFromEnum();
             }
 
-            // Если все еще не загружено, загружаем из enum
             if (_badWords.Count == 0)
             {
                 LoadFromEnum();
@@ -93,20 +90,17 @@ namespace MonitoringServiceCore.Services
         {
             try
             {
-                // Получаем все значения из enum BadWords
                 var enumValues = Enum.GetValues(typeof(BadWords));
                 _badWords = new List<string>();
 
                 foreach (BadWords word in enumValues)
                 {
-                    // Преобразуем enum в строку в нижнем регистре
                     string wordStr = word.ToString().ToLower();
                     _badWords.Add(wordStr);
                 }
 
                 Console.WriteLine($"Загружено {_badWords.Count} слов из enum BadWords");
 
-                // Выводим первые 10 слов для проверки
                 Console.WriteLine("Первые 10 слов из enum:");
                 foreach (var word in _badWords.Take(10))
                 {
@@ -122,7 +116,6 @@ namespace MonitoringServiceCore.Services
 
         private void LoadDefaultBadWords()
         {
-            // Резервный список на случай ошибок
             string[] defaultBadWords = {
                 "мат1", "мат2", "мат3", "брань1", "брань2"
             };
@@ -162,7 +155,6 @@ namespace MonitoringServiceCore.Services
                 Content = content
             };
 
-            // 1. Поиск .NET и вариантов
             result.CountIgnoreCase = CountOccurrencesIgnoreCase(content, searchWord);
             result.CountWholeWord = CountWithRegex(content, $@"\b{Regex.Escape(searchWord)}\b", RegexOptions.IgnoreCase);
             result.CountCaseSensitive = CountOccurrences(content, searchWord);
@@ -170,7 +162,6 @@ namespace MonitoringServiceCore.Services
             result.CountDotNet = CountWithRegex(content, @"\.NET", RegexOptions.IgnoreCase);
             result.CountAspDotNet = CountWithRegex(content, @"ASP\.NET", RegexOptions.IgnoreCase);
 
-            // 2. Проверка на нецензурные слова
             if (_isDictionaryLoaded && _badWords.Count > 0)
             {
                 var badWordsAnalysis = AnalyzeBadWords(content);
@@ -204,7 +195,6 @@ namespace MonitoringServiceCore.Services
                 {
                     try
                     {
-                        // Ищем вхождения слова
                         int count = CountWordOccurrences(contentLower, badWord);
 
                         if (count > 0)
@@ -212,7 +202,6 @@ namespace MonitoringServiceCore.Services
                             analysis.FoundWords[badWord] = count;
                             analysis.TotalCount += count;
 
-                            // Получаем контекст для первого вхождения
                             var context = GetWordContext(content, badWord);
                             if (context != null)
                             {
@@ -233,7 +222,6 @@ namespace MonitoringServiceCore.Services
                 }
             }
 
-            // Сортируем по количеству вхождений
             analysis.WordsWithContext = analysis.WordsWithContext
                 .OrderByDescending(w => w.Count)
                 .ToList();
@@ -246,10 +234,8 @@ namespace MonitoringServiceCore.Services
             int count = 0;
             int index = 0;
 
-            // Оптимизированный поиск с учетом того, что текст уже в нижнем регистре
             while ((index = text.IndexOf(word, index, StringComparison.Ordinal)) != -1)
             {
-                // Проверяем, что это отдельное слово
                 if (IsWholeWord(text, index, word.Length))
                 {
                     count++;
@@ -262,7 +248,6 @@ namespace MonitoringServiceCore.Services
 
         private bool IsWholeWord(string text, int index, int wordLength)
         {
-            // Проверяем символы до и после слова
             bool startOk = index == 0 || !char.IsLetterOrDigit(text[index - 1]);
             bool endOk = (index + wordLength >= text.Length) ||
                         !char.IsLetterOrDigit(text[index + wordLength]);
@@ -282,10 +267,8 @@ namespace MonitoringServiceCore.Services
 
             string context = text.Substring(start, end - start);
 
-            // Заменяем переносы строк
             context = context.Replace("\n", " ").Replace("\r", " ").Replace("\t", " ");
 
-            // Подсвечиваем найденное слово
             context = context.Replace(word, $"<strong>{word}</strong>", StringComparison.OrdinalIgnoreCase);
 
             return new WordContext
@@ -296,7 +279,6 @@ namespace MonitoringServiceCore.Services
             };
         }
 
-        // Метод 1: Без учета регистра
         private int CountOccurrencesIgnoreCase(string text, string searchWord)
         {
             int count = 0;
@@ -311,7 +293,6 @@ namespace MonitoringServiceCore.Services
             return count;
         }
 
-        // Метод 2: С учетом регистра
         private int CountOccurrences(string text, string searchWord)
         {
             int count = 0;
@@ -326,13 +307,11 @@ namespace MonitoringServiceCore.Services
             return count;
         }
 
-        // Метод 3: С использованием регулярных выражений
         private int CountWithRegex(string text, string pattern, RegexOptions options = RegexOptions.None)
         {
             return Regex.Matches(text, pattern, options).Count;
         }
 
-        // Метод для получения статистики словаря
         public DictionaryInfo GetDictionaryInfo()
         {
             return new DictionaryInfo
@@ -346,7 +325,6 @@ namespace MonitoringServiceCore.Services
             };
         }
 
-        // Дополнительные методы для работы со словарем
         public List<string> GetAllBadWords()
         {
             return new List<string>(_badWords);
@@ -395,7 +373,6 @@ namespace MonitoringServiceCore.Services
         }
     }
 
-    // Классы для хранения результатов остаются без изменений
     public class BadWordsAnalysis
     {
         public Dictionary<string, int> FoundWords { get; set; } = new Dictionary<string, int>();
@@ -421,7 +398,6 @@ namespace MonitoringServiceCore.Services
 
     public class AnalysisResult
     {
-        // Старые свойства для .NET анализа
         public int CountIgnoreCase { get; set; }
         public int CountWholeWord { get; set; }
         public int CountCaseSensitive { get; set; }
@@ -431,7 +407,6 @@ namespace MonitoringServiceCore.Services
         public int TotalCharacters { get; set; }
         public string? Content { get; set; }
 
-        // Новые свойства для нецензурных слов
         public Dictionary<string, int> BadWordsFound { get; set; } = new Dictionary<string, int>();
         public int TotalBadWordsCount { get; set; }
         public List<WordContext> BadWordsWithContext { get; set; } = new List<WordContext>();
