@@ -363,7 +363,7 @@
         <div class="header">
             <div class="header-left">
                 <h1><i class="fas fa-chart-line"></i> Мониторинг сайтов</h1>
-                <p>Анализ на наличие .NET терминов, нецензурной лексики и Google Forms</p>
+                <p>Анализ на наличие терминов, нецензурной лексики и Google Forms</p>
             </div>
             <div class="header-right">
                 <div class="user-info">
@@ -428,7 +428,7 @@
                                         </div>
                                     }
                                     <div class="form-text mt-2">
-                                        <i class="fas fa-info-circle"></i> Анализ на наличие слов .NET, нецензурной лексики и Google Forms
+                                        <i class="fas fa-info-circle"></i> Анализ на наличие, нецензурной лексики и Google Forms
                                     </div>
                                 </div>
 
@@ -446,27 +446,24 @@
                         </div>
                     </div>
 
-                    <!-- Результаты анализа .NET -->
                     @if (Model.HasAnalysis)
                     {
                         <div class="card">
                             <div class="card-header bg-info text-white">
-                                <h5 class="mb-0"><i class="fas fa-code"></i> Результаты анализа .NET</h5>
+                                <h5 class="mb-0"><i class="fas fa-code"></i> Результаты анализа </h5>
                             </div>
                             <div class="card-body">
                                 <div class="mb-3">
                                     <h6><i class="fas fa-chart-pie"></i> Статистика:</h6>
                                     <ul class="list-group">
                                         <li class="list-group-item d-flex justify-content-between align-items-center">
-                                            Все варианты (.NET, NET)
+                                            
                                             <span class="badge bg-primary rounded-pill">@Model.AnalysisResult!.CountAllVariants</span>
                                         </li>
                                         <li class="list-group-item d-flex justify-content-between align-items-center">
-                                            Только ".NET"
                                             <span class="badge bg-secondary rounded-pill">@Model.AnalysisResult!.CountDotNet</span>
                                         </li>
                                         <li class="list-group-item d-flex justify-content-between align-items-center">
-                                            Только "ASP.NET"
                                             <span class="badge bg-warning rounded-pill">@Model.AnalysisResult!.CountAspDotNet</span>
                                         </li>
                                     </ul>
@@ -723,7 +720,163 @@
                         </div>
                     </div>
                 }
+                <!-- Результаты проверки экстремистских материалов -->
+                @if (Model.ExtremistCheckResult != null)
+                {
+                    <div class="col-12 mt-4">
+                        <div class="card @(Model.ExtremistCheckResult.HasExtremistMaterials ? "border-danger" : "border-success")">
+                            <div class="card-header @(Model.ExtremistCheckResult.HasExtremistMaterials ? "bg-danger" : "bg-success") text-white">
+                                <h5 class="mb-0">
+                                    <i class="fas fa-gavel"></i>
+                                    Проверка на экстремистские материалы
+                                </h5>
+                            </div>
+                            <div class="card-body">
+                                @if (Model.ExtremistCheckResult.HasExtremistMaterials)
+                                {
+                                    <div class="alert alert-danger mb-3">
+                                        <i class="fas fa-exclamation-triangle"></i>
+                                        <strong>ВНИМАНИЕ!</strong> На странице обнаружены упоминания материалов из федерального списка экстремистских материалов!
+                                    </div>
 
+                                    <div class="table-responsive">
+                                        <table class="table table-sm">
+                                            <thead>
+                                                <tr>
+                                                    <th>№ п/п</th>
+                                                    <th>Описание</th>
+                                                    <th>Найденный фрагмент</th>
+                                                    <th>Дата решения</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                @foreach (var item in Model.ExtremistCheckResult.FoundMaterials.Take(20))
+                                                {
+                                                    <tr>
+                                                        <td>@item.Number</td>
+                                                        <td>@item.Description</td>
+                                                        <td><code>@item.MatchedKeyword</code></td>
+                                                        <td>@(item.DecisionDate?.ToString("dd.MM.yyyy") ?? "—")</td>
+                                                    </tr>
+                                                }
+                                                @if (Model.ExtremistCheckResult.FoundMaterials.Count > 20)
+                                                {
+                                                    <tr>
+                                                        <td colspan="4" class="text-muted">... и ещё @(Model.ExtremistCheckResult.FoundMaterials.Count - 20) материалов</td>
+                                                    </tr>
+                                                }
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                }
+                                else
+                                {
+                                    <div class="text-center py-4">
+                                        <i class="fas fa-check-circle text-success" style="font-size: 2rem;"></i>
+                                        <h5 class="text-success mt-2">Экстремистские материалы не обнаружены</h5>
+                                        <p class="text-muted">На странице не найдено упоминаний материалов из федерального списка</p>
+                                    </div>
+                                }
+                            </div>
+                        </div>
+                    </div>
+                }
+                <!--Согласие на обработку персональных данных-->
+                <div class="col-md-6">
+                    <div class="card mb-4">
+                        <div class="card-header bg-primary text-white">
+                            <h5 class="mb-0"><i class="fas fa-shield-alt"></i> Согласие на обработку ПД</h5>
+                        </div>
+                        <div class="card-body">
+                            <form method="post" asp-page-handler="CheckConsent">
+                                <div class="mb-3">
+                                    <label for="consentUrl" class="form-label">URL для проверки:</label>
+                                    <input type="url"
+                                           class="form-control"
+                                           id="consentUrl"
+                                           asp-for="SiteUrl"
+                                           placeholder="https://example.com">
+                                    <div class="form-text mt-2">
+                                        <i class="fas fa-info-circle"></i> Проверка наличия формы согласия, чекбокса, политики конфиденциальности
+                                    </div>
+                                </div>
+                                <button type="submit" class="btn btn-primary" id="consentBtn">
+                                    <i class="fas fa-check-double"></i> Проверить согласие
+                                </button>
+                            </form>
+
+                            @if (Model.ConsentResult != null)
+                            {
+                                <div class="mt-4">
+                                    <h6><i class="fas fa-chart-simple"></i> Результат проверки:</h6>
+                                    <ul class="list-group">
+                                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                                            Наличие механизма согласия
+                                            <span class="badge @(Model.ConsentResult.HasConsentMechanism ? "bg-success" : "bg-danger")">
+                                                @(Model.ConsentResult.HasConsentMechanism ? "Да" : "Нет")
+                                            </span>
+                                        </li>
+                                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                                            Чекбокс согласия
+                                            <span class="badge @(Model.ConsentResult.HasCheckboxConsent ? "bg-success" : "bg-danger")">
+                                                @(Model.ConsentResult.HasCheckboxConsent ? "Да" : "Нет")
+                                            </span>
+                                        </li>
+                                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                                            Кнопка принятия
+                                            <span class="badge @(Model.ConsentResult.HasButtonConsent ? "bg-success" : "bg-danger")">
+                                                @(Model.ConsentResult.HasButtonConsent ? "Да" : "Нет")
+                                            </span>
+                                        </li>
+                                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                                            Ссылка на политику конфиденциальности
+                                            <span class="badge @(Model.ConsentResult.HasPrivacyPolicyLink ? "bg-success" : "bg-danger")">
+                                                @(Model.ConsentResult.HasPrivacyPolicyLink ? "Да" : "Нет")
+                                            </span>
+                                        </li>
+                                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                                            Соответствие требованиям
+                                            <span class="badge @(Model.ConsentResult.IsCompliant ? "bg-success" : "bg-warning")">
+                                                @(Model.ConsentResult.IsCompliant ? "✅ Да" : "⚠️ Нет")
+                                            </span>
+                                        </li>
+                                    </ul>
+
+                                    @if (Model.ConsentResult.FoundKeywords.Any())
+                                    {
+                                        <div class="mt-3">
+                                            <strong>Найденные ключевые слова:</strong>
+                                            <div class="d-flex flex-wrap gap-2 mt-1">
+                                                @foreach (var kw in Model.ConsentResult.FoundKeywords.Take(5))
+                                                {
+                                                    <span class="badge bg-secondary">@kw</span>
+                                                }
+                                                @if (Model.ConsentResult.FoundKeywords.Count > 5)
+                                                {
+                                                    <span class="badge bg-secondary">+@(Model.ConsentResult.FoundKeywords.Count - 5)</span>
+                                                }
+                                            </div>
+                                        </div>
+                                    }
+
+                                    @if (!string.IsNullOrEmpty(Model.ConsentResult.ConsentText))
+                                    {
+                                        <div class="mt-3">
+                                            <button class="btn btn-sm btn-outline-info" type="button" data-bs-toggle="collapse" data-bs-target="#consentText">
+                                                <i class="fas fa-eye"></i> Показать фрагмент текста
+                                            </button>
+                                            <div class="collapse mt-2" id="consentText">
+                                                <div class="card card-body bg-light">
+                                                    <small>@Model.ConsentResult.ConsentText</small>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    }
+                                </div>
+                            }
+                        </div>
+                    </div>
+                </div>
                 <!-- Таблица пользователей -->
                 <div class="col-12 mt-4">
                     <div class="card">

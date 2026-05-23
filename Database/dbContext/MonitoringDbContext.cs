@@ -2,6 +2,7 @@
 using MonitoringServiceCore.Database.Roles;
 using MonitoringServiceCore.Pages;
 using MonitoringServiceCore.Database.SiteAnalysisNamespace;
+using MonitoringServiceCore.Database.ExtremistMaterialPackage;
 using System.Reflection.Emit;
 
 namespace MonitoringServiceCore.Database.dbContext
@@ -44,6 +45,7 @@ namespace MonitoringServiceCore.Database.dbContext
         public DbSet<User> Users { get; set; }
         public DbSet<Role> Roles { get; set; }
         public DbSet<SiteAnalysis> SiteAnalyses { get; set; }
+        public DbSet<ExtremistMaterial> ExtremistMaterials { get; set; }
         //public DbSet<Permission> Permissions { get; set; }
         //public DbSet<UserRole> UserRoles { get; set; }
         //public DbSet<RolePermission> RolePermissions { get; set; }
