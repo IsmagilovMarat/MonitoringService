@@ -1,5 +1,7 @@
 using Microsoft.AspNetCore;
 using Microsoft.AspNetCore.Hosting;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
 using MonitoringServiceCore.Database.dbContext;
 using MonitoringServiceCore.Database.Roles;
 using MonitoringServiceCore.Database.SiteAnalysisNamespace;
@@ -15,10 +17,11 @@ internal class Program
     private static void Main(string[] args)
     {
         var builder = WebApplication.CreateBuilder(args);
+        var myConneciton = builder.Configuration.GetConnectionString("DefaultConnection");
+        builder.Services.AddDbContext<MonitoringDbContext>(opt => opt.UseNpgsql(myConneciton));
 
         builder.Services.AddRazorPages();
         builder.Services.AddHttpContextAccessor();
-        builder.Services.AddScoped<MonitoringDbContext>();
         builder.Services.AddScoped<AuthorizeService>();
         builder.Services.AddScoped<SiteDataDownloader>();
         builder.Services.AddScoped<NetWordAnalyzer>();
@@ -38,7 +41,6 @@ internal class Program
                 options.Cookie.Name = "MonitoringServiceAuthCookie";
                 options.AccessDeniedPath = "/LoginPage";
             });
-        
 
         var app = builder.Build();
 
@@ -71,25 +73,11 @@ internal class Program
         app.MapRazorPages()
            .WithStaticAssets();
 
-
-
-        using (MonitoringDbContext Monitiordb = new MonitoringDbContext())
+        using (var scope = app.Services.CreateScope())
         {
-            var usersLIst = new List<User>();
-            Role adminRole = new Role { RoleName = "Admin" };
-            Role clientRole = new Role { RoleName = "Client" };
-
-            User user1 = new User { Name = "Admin1", SecondName = "Admin", Password = "admin", UserRole = adminRole };
-            User user2 = new User { Name = "Marat", SecondName = "Ismagilov", Password = "marat321", UserRole = clientRole };
-            usersLIst.Add(user1);
-            usersLIst.Add(user2);
-
-            SiteAnalysis siteAnalysis = new SiteAnalysis { Url = "https://ru.wikipedia.org/wiki/%D0%93%D0%B0%D0%B4", DomainUrl = "https://ru.wikipedia.org/wiki" };
-
-            Monitiordb.Roles.AddRange(adminRole, clientRole);
-            Monitiordb.Users.AddRange(user1, user2);
-            Monitiordb.SiteAnalyses.AddRange(siteAnalysis);
-            Monitiordb.SaveChanges();
+            var dbContext = scope.ServiceProvider.GetRequiredService<MonitoringDbContext>();
+            dbContext.Database.EnsureCreated();
+            DbInitializer.Initialize(dbContext);
         }
         app.Run();
     }

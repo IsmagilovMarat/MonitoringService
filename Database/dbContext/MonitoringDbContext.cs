@@ -9,20 +9,9 @@ namespace MonitoringServiceCore.Database.dbContext
 {
     public class MonitoringDbContext : DbContext
     {
-         static int count = 0;
-        public MonitoringDbContext()
+
+        public MonitoringDbContext(DbContextOptions<MonitoringDbContext> options):base(options)
         {
-            if (count < 1)
-            {
-                Database.EnsureDeleted();
-                Database.EnsureCreated();
-            }
-            
-            count = count+1;
-        }
-        protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
-        {
-           optionsBuilder.UseNpgsql("Host=localhost;Port=5432;Database=diplomDb;Username=postgres;Password=postgres");
         }
         protected override void OnModelCreating(ModelBuilder modelbuilder)
         {
@@ -40,7 +29,6 @@ namespace MonitoringServiceCore.Database.dbContext
 
                 
             });
-
         }
         public DbSet<User> Users { get; set; }
         public DbSet<Role> Roles { get; set; }
