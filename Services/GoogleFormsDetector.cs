@@ -8,7 +8,7 @@ namespace MonitoringServiceCore.Services
     public class GoogleFormsDetector
     {
         private readonly SiteDataDownloader _siteDataDownloader;
-        private readonly NetWordAnalyzer _netWordAnalyzer;
+        private readonly BadWordAnalyzer _BadWordAnalyzer;
         private readonly MonitoringDbContext _dbContext;
 
         private readonly List<Regex> _googleFormsPatterns = new List<Regex>
@@ -41,11 +41,11 @@ namespace MonitoringServiceCore.Services
 
         public GoogleFormsDetector(
             SiteDataDownloader siteDataDownloader,
-            NetWordAnalyzer netWordAnalyzer,
+            BadWordAnalyzer BadWordAnalyzer,
             MonitoringDbContext dbContext)
         {
             _siteDataDownloader = siteDataDownloader ?? throw new ArgumentNullException(nameof(siteDataDownloader));
-            _netWordAnalyzer = netWordAnalyzer ?? throw new ArgumentNullException(nameof(netWordAnalyzer));
+            _BadWordAnalyzer = BadWordAnalyzer ?? throw new ArgumentNullException(nameof(BadWordAnalyzer));
             _dbContext = dbContext ?? throw new ArgumentNullException(nameof(dbContext));
         }
 
@@ -176,7 +176,7 @@ namespace MonitoringServiceCore.Services
             {
                 string formContent = formMatch.Groups[1].Value;
 
-                var badWordsAnalysis = _netWordAnalyzer.AnalyzeBadWords(formContent);
+                var badWordsAnalysis = _BadWordAnalyzer.AnalyzeBadWords(formContent);
 
                 if (badWordsAnalysis.HasBadWords)
                 {

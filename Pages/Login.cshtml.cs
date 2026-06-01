@@ -28,7 +28,7 @@ namespace MonitoringServiceCore.Pages
 
         public async Task<IActionResult> OnPostAsync()
         {
-            // Проверяем пользователя
+            // пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ
 
               var user = _authService.GetUserFromDb(Username, Password);
 

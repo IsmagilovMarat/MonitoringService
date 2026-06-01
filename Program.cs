@@ -24,7 +24,7 @@ internal class Program
         builder.Services.AddHttpContextAccessor();
         builder.Services.AddScoped<AuthorizeService>();
         builder.Services.AddScoped<SiteDataDownloader>();
-        builder.Services.AddScoped<NetWordAnalyzer>();
+        builder.Services.AddScoped<BadWordAnalyzer>();
         builder.Services.AddScoped<GoogleFormsDetector>();
         builder.Services.AddScoped<PersonalDataConsentService>();
         builder.Services.AddHttpClient();
@@ -33,6 +33,7 @@ internal class Program
         builder.Services.AddScoped<JobFactory>();
         builder.Services.AddScoped<DataJob>();
         builder.Services.AddScoped<IEmailService, EmailService>();
+        builder.Services.AddScoped<BadWordAnalyzer>();
 
         builder.Services.AddAuthentication("SimpleCookie")
             .AddCookie("SimpleCookie", options =>

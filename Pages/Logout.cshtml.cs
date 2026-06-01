@@ -9,7 +9,7 @@ namespace MonitoringServiceCore.Pages
         public async Task<IActionResult> OnGetAsync()
         {
             await HttpContext.SignOutAsync("SimpleCookie");
-            return Page();
+            return RedirectToPage("Login");
         }
     }
 }

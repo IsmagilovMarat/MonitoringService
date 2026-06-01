@@ -1,14 +1,418 @@
-﻿@page "MainPage"
+﻿@page
 @model MonitoringServiceCore.Pages.UsersMainPageModel
 @{
+    Layout = null;
+    ViewData["Title"] = "Анализ сайтов - проверка контента";
 }
 
-<div> 
-    Сайты ебать: @{
-        foreach (var i in Model.SitesList)
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"]</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            min-height: 100vh;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            padding: 20px;
+        }
+
+        .container-custom {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+            color: white;
+        }
+
+            .header h1 {
+                font-size: 2.5rem;
+                font-weight: 700;
+                margin-bottom: 10px;
+            }
+
+            .header p {
+                font-size: 1.1rem;
+                opacity: 0.9;
+            }
+
+        .card {
+            border: none;
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            transition: transform 0.3s ease;
+            background: rgba(255, 255, 255, 0.98);
+        }
+
+            .card:hover {
+                transform: translateY(-5px);
+            }
+
+        .card-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-radius: 20px 20px 0 0 !important;
+            padding: 20px 25px;
+            font-weight: 600;
+            font-size: 1.2rem;
+        }
+
+        .form-control {
+            border: 2px solid #e0e0e0;
+            border-radius: 12px;
+            padding: 12px 18px;
+            font-size: 16px;
+            transition: all 0.3s ease;
+        }
+
+            .form-control:focus {
+                border-color: #667eea;
+                box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+            }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border: none;
+            border-radius: 12px;
+            padding: 12px 28px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+            .btn-primary:hover {
+                transform: translateY(-2px);
+                box-shadow: 0 7px 14px rgba(102, 126, 234, 0.3);
+            }
+
+        .feature-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 20px;
+            margin-top: 30px;
+        }
+
+        .feature-item {
+            background: white;
+            border-radius: 16px;
+            padding: 20px;
+            text-align: center;
+            transition: all 0.3s ease;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        }
+
+            .feature-item:hover {
+                transform: translateY(-5px);
+                box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+            }
+
+        .feature-icon {
+            font-size: 2.5rem;
+            margin-bottom: 15px;
+        }
+
+        .feature-item h4 {
+            font-size: 1.2rem;
+            margin-bottom: 10px;
+            color: #2c3e50;
+        }
+
+        .feature-item p {
+            font-size: 0.9rem;
+            color: #6c757d;
+            margin: 0;
+        }
+
+        .alert {
+            border-radius: 12px;
+            border: none;
+        }
+
+        .alert-success {
+            background: linear-gradient(135deg, #38c172 0%, #2d995b 100%);
+            color: white;
+        }
+
+        .alert-danger {
+            background: linear-gradient(135deg, #e3342f 0%, #cc1f1a 100%);
+            color: white;
+        }
+
+        .alert-warning {
+            background: linear-gradient(135deg, #ffed4a 0%, #f1c40f 100%);
+            color: #2c3e50;
+        }
+
+        .result-card {
+            margin-top: 30px;
+        }
+
+        .badge-custom {
+            padding: 8px 15px;
+            border-radius: 20px;
+            font-weight: 500;
+        }
+
+        .bg-gradient-danger {
+            background: linear-gradient(135deg, #e3342f 0%, #cc1f1a 100%);
+        }
+
+        .bg-gradient-success {
+            background: linear-gradient(135deg, #38c172 0%, #2d995b 100%);
+        }
+
+        .sites-list {
+            margin-top: 30px;
+        }
+
+        .table {
+            border-radius: 16px;
+            overflow: hidden;
+        }
+
+            .table thead th {
+                background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                color: white;
+                border: none;
+                padding: 15px;
+            }
+
+        .stat-card {
+            background: #f8f9fa;
+            border-radius: 12px;
+            padding: 15px;
+            margin-bottom: 15px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container-custom">
+        <!-- Header -->
+        <div class="header">
+            <h1><i class="fas fa-shield-alt"></i> Мониторинг сайтов</h1>
+            <p>Профессиональная проверка сайтов на наличие нецензурной лексики и запрещенного контента</p>
+            <div style="text-align: right; margin-bottom: 20px;">
+                <a href="/Logout" class="btn btn-outline-light" style="color: white; border-color: white;">
+                    <i class="fas fa-sign-out-alt"></i> Выйти
+                </a>
+            </div>
+        </div>
+
+        <!-- Основная карточка с формой -->
+        <div class="card">
+            <div class="card-header">
+                <i class="fas fa-search"></i> Проверка сайта
+            </div>
+            <div class="card-body">
+                <!-- Сообщения -->
+                @if (TempData["SuccessMessage"] != null)
+                {
+                    <div class="alert alert-success alert-dismissible fade show" role="alert">
+                        <i class="fas fa-check-circle"></i> @TempData["SuccessMessage"]
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    </div>
+                }
+                @if (TempData["WarningMessage"] != null)
+                {
+                    <div class="alert alert-warning alert-dismissible fade show" role="alert">
+                        <i class="fas fa-exclamation-triangle"></i> @TempData["WarningMessage"]
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    </div>
+                }
+                @if (!string.IsNullOrEmpty(Model.ErrorMessage))
+                {
+                    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                        <i class="fas fa-times-circle"></i> @Model.ErrorMessage
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    </div>
+                }
+
+                <!-- Форма ввода URL -->
+                <form method="post" asp-page-handler="Analyze">
+                    <div class="mb-3">
+                        <label for="SiteUrl" class="form-label fw-bold">
+                            <i class="fas fa-link"></i> URL сайта для проверки:
+                        </label>
+                        <input type="url"
+                               class="form-control @(ViewData.ModelState["SiteUrl"]?.Errors.Count > 0 ? "is-invalid" : "")"
+                               id="SiteUrl"
+                               asp-for="SiteUrl"
+                               placeholder="https://example.com"
+                               required>
+                        <div class="invalid-feedback">
+                            @ViewData.ModelState["SiteUrl"]?.Errors.FirstOrDefault()?.ErrorMessage
+                        </div>
+                        <div class="form-text mt-2">
+                            <i class="fas fa-info-circle"></i> Введите полный URL сайта, включая http:// или https://
+                        </div>
+                    </div>
+                    <button type="submit" class="btn btn-primary" id="analyzeBtn">
+                        <i class="fas fa-search"></i> Начать анализ
+                    </button>
+                </form>
+            </div>
+        </div>
+
+        <!-- Что проверяет сервис -->
+        <div class="feature-list">
+            <div class="feature-item">
+                <div class="feature-icon">
+                    <i class="fas fa-ban" style="color: #e3342f;"></i>
+                </div>
+                <h4>Нецензурная лексика</h4>
+                <p>Проверка на наличие матерных слов и ненормативной лексики</p>
+            </div>
+            <div class="feature-item">
+                <div class="feature-icon">
+                    <i class="fab fa-google" style="color: #ea4335;"></i>
+                </div>
+                <h4>Google Forms</h4>
+                <p>Обнаружение форм Google и проверка на фишинговые формы</p>
+            </div>
+            <div class="feature-item">
+                <div class="feature-icon">
+                    <i class="fas fa-gavel" style="color: #f1c40f;"></i>
+                </div>
+                <h4>Экстремистские материалы</h4>
+                <p>Проверка по федеральному списку экстремистских материалов</p>
+            </div>
+            <div class="feature-item">
+                <div class="feature-icon">
+                    <i class="fas fa-user-shield" style="color: #3490dc;"></i>
+                </div>
+                <h4>Персональные данные</h4>
+                <p>Проверка наличия согласия на обработку ПД и политики конфиденциальности</p>
+            </div>
+            <div class="feature-item">
+                <div class="feature-icon">
+                    <i class="fas fa-chart-line" style="color: #764ba2;"></i>
+                </div>
+                <h4>Полный отчет</h4>
+                <p>Детальная статистика и контекст найденных нарушений</p>
+            </div>
+            <div class="feature-item">
+                <div class="feature-icon">
+                    <i class="fas fa-clock" style="color: #38c172;"></i>
+                </div>
+                <h4>Быстрая проверка</h4>
+                <p>Мгновенный анализ содержимого сайта</p>
+            </div>
+        </div>
+
+        <!-- Результаты анализа -->
+        @if (Model.HasAnalysis)
         {
-        <div> URl: @i.Url </div>
-        <div> URl: @i.DomainUrl </div>
-    }
-    }
-</div>
+            <div class="card result-card">
+                <div class="card-header">
+                    <i class="fas fa-chart-bar"></i> Результаты анализа
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="stat-card">
+                                <h5><i class="fas fa-chart-simple"></i> Статистика проверки:</h5>
+                                <ul class="list-group mt-3">
+                                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                                        Проверенный URL
+                                        <span class="badge bg-secondary rounded-pill">@Model.SiteUrl</span>
+                                    </li>
+                                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                                        Статус проверки
+                                        <span class="badge @(Model.AnalysisResult!.HasBadWords ? "bg-danger" : "bg-success") rounded-pill">
+                                            @(Model.AnalysisResult.HasBadWords ? "Нарушения найдены" : "Безопасно")
+                                        </span>
+                                    </li>
+                                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                                        Найдено нецензурных слов
+                                        <span class="badge @(Model.AnalysisResult.HasBadWords ? "bg-danger" : "bg-success") rounded-pill">
+                                            @Model.AnalysisResult.TotalBadWordsCount
+                                        </span>
+                                    </li>
+                                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                                        Уникальных нецензурных слов
+                                        <span class="badge bg-warning rounded-pill">@Model.AnalysisResult.BadWordsFound.Count</span>
+                                    </li>
+                                </ul>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            @if (Model.AnalysisResult.HasBadWords)
+                            {
+                                <div class="alert alert-danger">
+                                    <i class="fas fa-exclamation-triangle fa-2x mb-2"></i>
+                                    <h5>ВНИМАНИЕ!</h5>
+                                    <p>На сайте обнаружена нецензурная лексика!</p>
+                                </div>
+                                <div class="mt-3">
+                                    <strong><i class="fas fa-list"></i> Найденные слова и частота:</strong>
+                                    <div class="d-flex flex-wrap gap-2 mt-2">
+                                        @foreach (var word in Model.AnalysisResult.BadWordsFound.Take(15))
+                                        {
+                                            <span class="badge bg-danger">
+                                                @word.Key <span class="badge bg-light text-dark ms-1">@word.Value</span>
+                                            </span>
+                                        }
+                                        @if (Model.AnalysisResult.BadWordsFound.Count > 15)
+                                        {
+                                            <span class="badge bg-secondary">
+                                                +@(Model.AnalysisResult.BadWordsFound.Count - 15) еще...
+                                            </span>
+                                        }
+                                    </div>
+                                </div>
+                            }
+                            else
+                            {
+                                <div class="alert alert-success text-center">
+                                    <i class="fas fa-check-circle fa-3x mb-2"></i>
+                                    <h5>Хорошие новости!</h5>
+                                    <p class="mb-0">Нецензурная лексика не обнаружена. Сайт соответствует нормам.</p>
+                                </div>
+                            }
+                        </div>
+                    </div>
+                </div>
+            </div>
+        }
+      
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Анимация и блокировка кнопки при отправке
+        document.querySelector('form')?.addEventListener('submit', function(e) {
+            const btn = document.getElementById('analyzeBtn');
+            if (btn) {
+                btn.disabled = true;
+                btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Анализ...';
+            }
+        });
+
+        // Плавное появление элементов
+        document.addEventListener('DOMContentLoaded', function() {
+            const elements = document.querySelectorAll('.card, .feature-item');
+            elements.forEach((el, index) => {
+                el.style.opacity = '0';
+                el.style.transform = 'translateY(20px)';
+                setTimeout(() => {
+                    el.style.transition = 'opacity 0.5s ease, transform 0.5s ease';
+                    el.style.opacity = '1';
+                    el.style.transform = 'translateY(0)';
+                }, index * 100);
+            });
+        });
+    </script>
+</body>
+</html>

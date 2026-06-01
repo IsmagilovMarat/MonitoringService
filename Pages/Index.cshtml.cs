@@ -17,7 +17,7 @@ namespace MonitoringServiceCore.Pages
     {
         private readonly MonitoringDbContext _dbContext;
         private readonly SiteDataDownloader _siteDataDownloader;
-        private readonly NetWordAnalyzer _netWordAnalyzer;
+        private readonly BadWordAnalyzer _BadWordAnalyzer;
         private readonly GoogleFormsDetector _googleFormsDetector;
         private readonly PersonalDataConsentService _consentService;
         private readonly ExtremistMaterialChecker _extremistChecker;
@@ -46,7 +46,7 @@ namespace MonitoringServiceCore.Pages
         public IndexModel(
             MonitoringDbContext dbContext,
             SiteDataDownloader siteDataDownloader,
-            NetWordAnalyzer netWordAnalyzer,
+            BadWordAnalyzer BadWordAnalyzer,
             GoogleFormsDetector googleFormsDetector,
             PersonalDataConsentService consentService,
             ExtremistMaterialChecker extremistChecker,
@@ -55,7 +55,7 @@ namespace MonitoringServiceCore.Pages
             _emailService = emailService;
             _dbContext = dbContext;
             _siteDataDownloader = siteDataDownloader;
-            _netWordAnalyzer = netWordAnalyzer;
+            _BadWordAnalyzer = BadWordAnalyzer;
             _googleFormsDetector = googleFormsDetector;
             _consentService = consentService;
             _extremistChecker = extremistChecker;
@@ -66,7 +66,7 @@ namespace MonitoringServiceCore.Pages
         public void OnGet()
         {
             Users = _dbContext.Users.ToList();
-            DictionaryInfo = _netWordAnalyzer.GetDictionaryInfo();
+            DictionaryInfo = _BadWordAnalyzer.GetDictionaryInfo();
         }
         public async Task<IActionResult> OnPostCheckConsentAsync()
         {
@@ -94,7 +94,7 @@ namespace MonitoringServiceCore.Pages
             if (!ModelState.IsValid)
             {
                 Users = _dbContext.Users.ToList();
-                DictionaryInfo = _netWordAnalyzer.GetDictionaryInfo();
+                DictionaryInfo = _BadWordAnalyzer.GetDictionaryInfo();
                 return Page();
             }
 
@@ -102,18 +102,22 @@ namespace MonitoringServiceCore.Pages
             {
                 HtmlContent = await _siteDataDownloader.DownloadHtmlAsync(SiteUrl!);
                 ExtremistCheckResult = await _extremistChecker.CheckContentAsync(HtmlContent, SiteUrl!);
-                AnalysisResult = _netWordAnalyzer.AnalyzeContent(HtmlContent, "NET");
+
+                // Убрали параметр "NET"
+                AnalysisResult = _BadWordAnalyzer.AnalyzeContent(HtmlContent);
 
                 GoogleFormsResult = await _googleFormsDetector.DetectGoogleFormsAsync(SiteUrl!);
 
-                DictionaryInfo = _netWordAnalyzer.GetDictionaryInfo();
+                DictionaryInfo = _BadWordAnalyzer.GetDictionaryInfo();
                 Users = _dbContext.Users.ToList();
 
                 var messages = new List<string>();
+
                 if (ExtremistCheckResult.HasExtremistMaterials)
                 {
                     messages.Add($"Обнаружено {ExtremistCheckResult.FoundMaterials.Count} упоминаний материалов из федерального списка экстремистских материалов");
                 }
+
                 if (AnalysisResult.HasBadWords)
                 {
                     messages.Add($"Обнаружено {AnalysisResult.TotalBadWordsCount} нецензурных слов ({AnalysisResult.BadWordsFound.Count} уникальных)");
@@ -134,11 +138,11 @@ namespace MonitoringServiceCore.Pages
                 }
                 else
                 {
-                    TempData["SuccessMessage"] = $"Анализ завершен! Найдено {AnalysisResult.CountAllVariants} вхождений NET. Нецензурные слова и Google Forms не обнаружены.";
+                    TempData["SuccessMessage"] = "Анализ завершен! Нецензурные слова и Google Forms не обнаружены.";
                 }
 
-                //email
-                string adminEmail = "maratismage@mail.ru"; // или получите из настроек
+                // Отправка email
+                string adminEmail = "maratismage@mail.ru";
                 string subject = $"Результаты анализа сайта {SiteUrl}";
 
                 var messageBuilder = new System.Text.StringBuilder();
@@ -168,14 +172,15 @@ namespace MonitoringServiceCore.Pages
                 {
                     messageBuilder.AppendLine("<p style='color:green'>✅ Нарушений не обнаружено.</p>");
                 }
+
                 SendEmailInBackground("fullstack_web_developer@mail.ru", subject, messageBuilder.ToString());
             }
             catch (Exception ex)
             {
                 ErrorMessage = $"Ошибка при анализе сайта: {ex.Message}";
                 Users = _dbContext.Users.ToList();
-                DictionaryInfo = _netWordAnalyzer.GetDictionaryInfo();
-                Console.WriteLine($"Ошибка отправки email: {ex.Message}");
+                DictionaryInfo = _BadWordAnalyzer.GetDictionaryInfo();
+                Console.WriteLine($"Ошибка: {ex.Message}");
             }
 
             return Page();
@@ -201,7 +206,7 @@ namespace MonitoringServiceCore.Pages
         {
             ShowBadWordsDetails = !ShowBadWordsDetails;
             Users = _dbContext.Users.ToList();
-            DictionaryInfo = _netWordAnalyzer.GetDictionaryInfo();
+            DictionaryInfo = _BadWordAnalyzer.GetDictionaryInfo();
             return Page();
         }
 
@@ -209,7 +214,7 @@ namespace MonitoringServiceCore.Pages
         {
             ShowGoogleFormsDetails = !ShowGoogleFormsDetails;
             Users = _dbContext.Users.ToList();
-            DictionaryInfo = _netWordAnalyzer.GetDictionaryInfo();
+            DictionaryInfo = _BadWordAnalyzer.GetDictionaryInfo();
             return Page();
         }
     }

@@ -1,4 +1,4 @@
-﻿namespace MonitoringServiceCore.Services
+﻿namespace MonitoringServiceCore.Emuns
 {
     public enum BadWords
     {

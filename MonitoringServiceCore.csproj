@@ -9,10 +9,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Content Include="Словарь нецензурных выражений\Русский матерный словарь.txt" />
-  </ItemGroup>
-
-  <ItemGroup>
+    <PackageReference Include="DotnetBadWordDetector" Version="2.0.0" />
     <PackageReference Include="HtmlAgilityPack" Version="1.12.4" />
     <PackageReference Include="MailKit" Version="4.16.0" />
     <PackageReference Include="Microsoft.EntityFrameworkCore" Version="9.0.11" />
