@@ -41,26 +41,26 @@
             transition: transform 0.3s ease;
         }
 
-            .login-container:hover {
-                transform: translateY(-5px);
-            }
+        .login-container:hover {
+            transform: translateY(-5px);
+        }
 
         .login-header {
             text-align: center;
             margin-bottom: 35px;
         }
 
-            .login-header h2 {
-                color: #2c3e50;
-                font-weight: 600;
-                margin-bottom: 10px;
-                font-size: 28px;
-            }
+        .login-header h2 {
+            color: #2c3e50;
+            font-weight: 600;
+            margin-bottom: 10px;
+            font-size: 28px;
+        }
 
-            .login-header p {
-                color: #7f8c8d;
-                font-size: 14px;
-            }
+        .login-header p {
+            color: #7f8c8d;
+            font-size: 14px;
+        }
 
         .login-logo {
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
@@ -74,25 +74,25 @@
             box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
         }
 
-            .login-logo i {
-                font-size: 36px;
-                color: white;
-            }
+        .login-logo i {
+            font-size: 36px;
+            color: white;
+        }
 
         .form-group {
             margin-bottom: 25px;
             position: relative;
         }
 
-            .form-group label {
-                display: block;
-                margin-bottom: 8px;
-                color: #2c3e50;
-                font-weight: 500;
-                font-size: 14px;
-                text-transform: uppercase;
-                letter-spacing: 0.5px;
-            }
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            color: #2c3e50;
+            font-weight: 500;
+            font-size: 14px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
 
         .form-control {
             width: 100%;
@@ -104,12 +104,12 @@
             background: #f8f9fa;
         }
 
-            .form-control:focus {
-                outline: none;
-                border-color: #667eea;
-                box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
-                background: white;
-            }
+        .form-control:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+            background: white;
+        }
 
         .input-icon {
             position: absolute;
@@ -131,9 +131,9 @@
             animation: fadeIn 0.5s ease;
         }
 
-            .error-message i {
-                margin-right: 8px;
-            }
+        .error-message i {
+            margin-right: 8px;
+        }
 
         .btn-login {
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
@@ -151,14 +151,14 @@
             margin-top: 10px;
         }
 
-            .btn-login:hover {
-                transform: translateY(-2px);
-                box-shadow: 0 7px 14px rgba(102, 126, 234, 0.3);
-            }
+        .btn-login:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 7px 14px rgba(102, 126, 234, 0.3);
+        }
 
-            .btn-login:active {
-                transform: translateY(0);
-            }
+        .btn-login:active {
+            transform: translateY(0);
+        }
 
         .login-footer {
             text-align: center;
@@ -169,15 +169,15 @@
             font-size: 14px;
         }
 
-            .login-footer a {
-                color: #667eea;
-                text-decoration: none;
-                font-weight: 500;
-            }
+        .login-footer a {
+            color: #667eea;
+            text-decoration: none;
+            font-weight: 500;
+        }
 
-                .login-footer a:hover {
-                    text-decoration: underline;
-                }
+        .login-footer a:hover {
+            text-decoration: underline;
+        }
 
         .password-toggle {
             position: absolute;
@@ -190,8 +190,6 @@
             font-size: 18px;
         }
 
-        
-
         .floating-icon {
             position: absolute;
             font-size: 24px;
@@ -199,43 +197,76 @@
             animation: float 6s ease-in-out infinite;
         }
 
-            .floating-icon:nth-child(1) {
-                top: 10%;
-                left: 10%;
-            }
+        .floating-icon:nth-child(1) {
+            top: 10%;
+            left: 10%;
+        }
 
-            .floating-icon:nth-child(2) {
-                top: 20%;
-                right: 15%;
-                animation-delay: 1s;
-            }
+        .floating-icon:nth-child(2) {
+            top: 20%;
+            right: 15%;
+            animation-delay: 1s;
+        }
 
-            .floating-icon:nth-child(3) {
-                bottom: 30%;
-                left: 15%;
-                animation-delay: 2s;
-            }
+        .floating-icon:nth-child(3) {
+            bottom: 30%;
+            left: 15%;
+            animation-delay: 2s;
+        }
 
-            .floating-icon:nth-child(4) {
-                bottom: 20%;
-                right: 10%;
-                animation-delay: 3s;
-            }
+        .floating-icon:nth-child(4) {
+            bottom: 20%;
+            right: 10%;
+            animation-delay: 3s;
+        }
 
-            .floating-icon:nth-child(5) {
-                top: 40%;
-                left: 20%;
-                animation-delay: 4s;
-            }
+        .floating-icon:nth-child(5) {
+            top: 40%;
+            left: 20%;
+            animation-delay: 4s;
+        }
 
-   
-       
+        .login-tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 25px;
+            border-bottom: 2px solid #e0e0e0;
+        }
 
+        .login-tab {
+            flex: 1;
+            text-align: center;
+            padding: 10px;
+            cursor: pointer;
+            background: none;
+            border: none;
+            font-size: 16px;
+            font-weight: 500;
+            color: #7f8c8d;
+            transition: all 0.3s ease;
+        }
+
+        .login-tab.active {
+            color: #667eea;
+            border-bottom: 2px solid #667eea;
+            margin-bottom: -2px;
+        }
+
+        .login-tab:hover {
+            color: #667eea;
+        }
+
+        .login-field {
+            transition: all 0.3s ease;
+        }
+
+        .login-field.hidden {
+            display: none;
+        }
        
     </style>
 </head>
 <body>
-    <!-- Декоративные элементы на фоне -->
     <div class="floating-icon"><i class="fas fa-shield-alt"></i></div>
     <div class="floating-icon"><i class="fas fa-search"></i></div>
     <div class="floating-icon"><i class="fas fa-chart-bar"></i></div>
@@ -251,33 +282,64 @@
             <p>Мониторинг сайтов на наличие нецензурной лексики</p>
         </div>
 
-        @if (Model != null)
+        @if (!string.IsNullOrEmpty(Model.ErrorMessage))
         {
             <div class="error-message">
-                <i class="fas fa-exclamation-circle"></i> Не найдено(
+                <i class="fas fa-exclamation-circle"></i> @Model.ErrorMessage
             </div>
         }
 
+        <!-- Вкладки для выбора типа входа -->
+        <div class="login-tabs">
+            <button type="button" class="login-tab active" onclick="switchTab('username')">
+                <i class="fas fa-user"></i> По имени
+            </button>
+            <button type="button" class="login-tab" onclick="switchTab('email')">
+                <i class="fas fa-envelope"></i> По email
+            </button>
+        </div>
+
         <form method="post" id="loginForm">
-            <div class="form-group">
-                <label for="username"><i class="fas fa-user"></i> Имя пользователя</label>
-                <input type="text"
-                       id="username"
-                       name="username"
-                       class="form-control"
-                       placeholder="Введите имя пользователя"
-                       required
-                       autocomplete="username">
-                <div class="input-icon">
-                    <i class="fas fa-user-circle"></i>
+            <!-- Поле для входа по имени пользователя -->
+            <div id="usernameField" class="login-field">
+                <div class="form-group">
+                    <label for="username"><i class="fas fa-user"></i> Имя пользователя</label>
+                    <input type="text"
+                           id="username"
+                           name="Username"
+                           class="form-control"
+                           placeholder="Введите имя пользователя"
+                           autocomplete="username">
+                    <div class="input-icon">
+                        <i class="fas fa-user-circle"></i>
+                    </div>
                 </div>
             </div>
+
+            <!-- Поле для входа по email -->
+            <div id="emailField" class="login-field hidden">
+                <div class="form-group">
+                    <label for="email"><i class="fas fa-envelope"></i> Email</label>
+                    <input type="email"
+                           id="email"
+                           name="Email"
+                           class="form-control"
+                           placeholder="example@mail.ru"
+                           autocomplete="email">
+                    <div class="input-icon">
+                        <i class="fas fa-envelope"></i>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Скрытое поле для определения метода входа -->
+            <input type="hidden" id="UseEmailLogin" name="UseEmailLogin" value="false" />
 
             <div class="form-group">
                 <label for="password"><i class="fas fa-key"></i> Пароль</label>
                 <input type="password"
                        id="password"
-                       name="password"
+                       name="Password"
                        class="form-control"
                        placeholder="Введите пароль"
                        required
@@ -289,7 +351,9 @@
 
             <button type="submit" class="btn-login" id="loginButton">
                 <span id="loginText">Войти в систему</span>
-                <div class="loading" id="loadingSpinner"></div>
+                <span id="loadingSpinner" style="display: none;">
+                    <i class="fas fa-spinner fa-spin"></i> Вход...
+                </span>
             </button>
         </form>
 
@@ -301,6 +365,32 @@
     </div>
 
     <script>
+        // Переключение между вкладками
+        function switchTab(type) {
+            const usernameField = document.getElementById('usernameField');
+            const emailField = document.getElementById('emailField');
+            const useEmailLogin = document.getElementById('UseEmailLogin');
+            const tabs = document.querySelectorAll('.login-tab');
+
+            if (type === 'username') {
+                usernameField.classList.remove('hidden');
+                emailField.classList.add('hidden');
+                useEmailLogin.value = 'false';
+                tabs[0].classList.add('active');
+                tabs[1].classList.remove('active');
+                document.getElementById('username').required = true;
+                document.getElementById('email').required = false;
+            } else {
+                usernameField.classList.add('hidden');
+                emailField.classList.remove('hidden');
+                useEmailLogin.value = 'true';
+                tabs[0].classList.remove('active');
+                tabs[1].classList.add('active');
+                document.getElementById('username').required = false;
+                document.getElementById('email').required = true;
+            }
+        }
+
         // Функция для показа/скрытия пароля
         function togglePassword() {
             const passwordInput = document.getElementById('password');
@@ -319,56 +409,79 @@
 
         // Функция для показа информации
         function showInfo() {
-            alert('Для входа используйте учетные данные, предоставленные администратором системы.');
+            alert('Для входа используйте:\n- Имя пользователя или email\n- Пароль, указанный при регистрации');
         }
 
-        // Анимация загрузки при отправке формы
+      
+
+        // Обработка отправки формы
         document.getElementById('loginForm').addEventListener('submit', function(e) {
             const loginButton = document.getElementById('loginButton');
             const loginText = document.getElementById('loginText');
             const loadingSpinner = document.getElementById('loadingSpinner');
+            const useEmailLogin = document.getElementById('UseEmailLogin').value === 'true';
+
+            // Валидация перед отправкой
+            if (useEmailLogin) {
+                const email = document.getElementById('email').value;
+                if (!email) {
+                    e.preventDefault();
+                    alert('Введите email');
+                    return false;
+                }
+                if (!isValidEmail(email)) {
+                    e.preventDefault();
+                    alert('Введите корректный email (например: user@example.com)');
+                    return false;
+                }
+            } else {
+                const username = document.getElementById('username').value;
+                if (!username) {
+                    e.preventDefault();
+                    alert('Введите имя пользователя');
+                    return false;
+                }
+                if (username.length < 3) {
+                    e.preventDefault();
+                    alert('Имя пользователя должно содержать минимум 3 символа');
+                    return false;
+                }
+            }
+
+            const password = document.getElementById('password').value;
+            if (!password) {
+                e.preventDefault();
+                alert('Введите пароль');
+                return false;
+            }
+            if (password.length < 4) {
+                e.preventDefault();
+                alert('Пароль должен содержать минимум 4 символа');
+                return false;
+            }
 
             loginText.style.display = 'none';
-            loadingSpinner.style.display = 'block';
+            loadingSpinner.style.display = 'inline';
             loginButton.disabled = true;
-
-            // Имитация загрузки (в реальном приложении убрать)
-            setTimeout(() => {
-                loginText.style.display = 'inline';
-                loadingSpinner.style.display = 'none';
-                loginButton.disabled = false;
-            }, 2000);
         });
 
-        // Автофокус на поле ввода имени пользователя
+        // Автофокус
         document.addEventListener('DOMContentLoaded', function() {
             document.getElementById('username').focus();
 
             // Плавное появление формы
-            document.querySelector('.login-container').style.opacity = '0';
-            document.querySelector('.login-container').style.transform = 'translateY(20px)';
+            const container = document.querySelector('.login-container');
+            if (container) {
+                container.style.opacity = '0';
+                container.style.transform = 'translateY(20px)';
 
-            setTimeout(() => {
-                document.querySelector('.login-container').style.transition = 'opacity 0.5s ease, transform 0.5s ease';
-                document.querySelector('.login-container').style.opacity = '1';
-                document.querySelector('.login-container').style.transform = 'translateY(0)';
-            }, 100);
-        });
-
-        // Эффект при наведении на поля ввода
-        const inputs = document.querySelectorAll('.form-control');
-        inputs.forEach(input => {
-            input.addEventListener('focus', function() {
-                this.parentElement.style.transform = 'scale(1.02)';
-            });
-
-            input.addEventListener('blur', function() {
-                this.parentElement.style.transform = 'scale(1)';
-            });
+                setTimeout(() => {
+                    container.style.transition = 'opacity 0.5s ease, transform 0.5s ease';
+                    container.style.opacity = '1';
+                    container.style.transform = 'translateY(0)';
+                }, 100);
+            }
         });
     </script>
-
-    <!-- Bootstrap JS (опционально) -->
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>

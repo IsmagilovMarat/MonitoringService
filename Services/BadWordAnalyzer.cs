@@ -110,10 +110,11 @@ namespace MonitoringServiceCore.Services
             // Анализ нецензурных слов через словарь
             if (_isDictionaryLoaded && _badWords.Count > 0)
             {
-                var badWordsAnalysis = AnalyzeBadWords(content);
+                var badWordsAnalysis = AnalyzeBadWordsWithPositions(content);
                 result.BadWordsFound = badWordsAnalysis.FoundWords;
                 result.TotalBadWordsCount = badWordsAnalysis.TotalCount;
                 result.BadWordsWithContext = badWordsAnalysis.WordsWithContext;
+                result.WordPositions = badWordsAnalysis.WordPositions;
             }
 
             // ML анализ
@@ -123,45 +124,43 @@ namespace MonitoringServiceCore.Services
                 {
                     string plainText = Regex.Replace(content, "<.*?>", string.Empty);
 
-                    bool hasProfanity = _mlDetector.IsPhraseProfane(plainText);
-                    float profanityProbability = _mlDetector.GetPhraseProfanityProbability(plainText);
-
-                    var words = plainText.Split(new[] { ' ', '\n', '\r', '\t', '.', ',', '!', '?' },
-                        StringSplitOptions.RemoveEmptyEntries);
-
-                    var mlFoundWords = new Dictionary<string, int>();
-                    foreach (var word in words)
-                    {
-                        if (_mlDetector.IsProfane(word))
-                        {
-                            string wordLower = word.ToLower();
-                            if (mlFoundWords.ContainsKey(wordLower))
-                                mlFoundWords[wordLower]++;
-                            else
-                                mlFoundWords[wordLower] = 1;
-                        }
-                    }
+                    // Получаем позиции матных слов от ML детектора
+                    var mlPositions = GetMLWordPositions(plainText, content);
 
                     result.MLDetectionResult = new MLDetectionResult
                     {
-                        HasProfanity = hasProfanity,
-                        Probability = profanityProbability,
-                        FoundWords = mlFoundWords,
+                        HasProfanity = mlPositions.Any(),
+                        Probability = mlPositions.Any() ? _mlDetector.GetPhraseProfanityProbability(plainText) : 0,
+                        FoundWords = mlPositions.GroupBy(p => p.Word).ToDictionary(g => g.Key, g => g.Count()),
+                        WordPositions = mlPositions,
                         IsMLBased = true
                     };
 
                     // Объединяем результаты из словаря и ML
-                    if (hasProfanity && !result.HasBadWords)
+                    if (mlPositions.Any() && !result.HasBadWords)
                     {
                         result.MLOnlyDetected = true;
-                        result.TotalBadWordsCount = Math.Max(result.TotalBadWordsCount, mlFoundWords.Sum(x => x.Value));
+                        result.TotalBadWordsCount = Math.Max(result.TotalBadWordsCount, mlPositions.Count);
 
-                        foreach (var word in mlFoundWords)
+                        foreach (var pos in mlPositions)
                         {
-                            if (!result.BadWordsFound.ContainsKey(word.Key))
+                            if (!result.BadWordsFound.ContainsKey(pos.Word))
                             {
-                                result.BadWordsFound[word.Key] = word.Value;
+                                result.BadWordsFound[pos.Word] = 1;
                             }
+                            else
+                            {
+                                result.BadWordsFound[pos.Word]++;
+                            }
+                            result.WordPositions.Add(pos);
+                        }
+                    }
+                    else if (mlPositions.Any())
+                    {
+                        // Добавляем ML позиции к существующим
+                        foreach (var pos in mlPositions)
+                        {
+                            result.WordPositions.Add(pos);
                         }
                     }
                 }
@@ -188,16 +187,50 @@ namespace MonitoringServiceCore.Services
 
             if (_isDictionaryLoaded && _badWords.Count > 0)
             {
-                var badWordsAnalysis = AnalyzeBadWords(content);
+                var badWordsAnalysis = AnalyzeBadWordsWithPositions(content);
                 result.BadWordsFound = badWordsAnalysis.FoundWords;
                 result.TotalBadWordsCount = badWordsAnalysis.TotalCount;
                 result.BadWordsWithContext = badWordsAnalysis.WordsWithContext;
+                result.WordPositions = badWordsAnalysis.WordPositions;
             }
 
             return result;
         }
 
-        public BadWordsAnalysis AnalyzeBadWords(string content)
+        // НОВЫЙ МЕТОД: Получение позиций матных слов от ML детектора
+        private List<WordPosition> GetMLWordPositions(string plainText, string originalHtml)
+        {
+            var positions = new List<WordPosition>();
+            var words = plainText.Split(new[] { ' ', '\n', '\r', '\t', '.', ',', '!', '?', ';', ':', '(', ')', '[', ']', '{', '}' },
+                StringSplitOptions.RemoveEmptyEntries);
+
+            int currentIndex = 0;
+
+            foreach (var word in words)
+            {
+                if (_mlDetector!.IsProfane(word))
+                {
+                    // Ищем позицию слова в оригинальном HTML
+                    int posInHtml = originalHtml.IndexOf(word, currentIndex, StringComparison.OrdinalIgnoreCase);
+                    if (posInHtml >= 0)
+                    {
+                        positions.Add(new WordPosition
+                        {
+                            Word = word.ToLower(),
+                            Position = posInHtml,
+                            LineNumber = GetLineNumber(originalHtml, posInHtml),
+                            Context = GetContextAround(originalHtml, posInHtml, word.Length)
+                        });
+                        currentIndex = posInHtml + 1;
+                    }
+                }
+            }
+
+            return positions;
+        }
+
+        // НОВЫЙ МЕТОД: Анализ с позициями слов
+        public BadWordsAnalysis AnalyzeBadWordsWithPositions(string content)
         {
             var analysis = new BadWordsAnalysis();
 
@@ -215,12 +248,24 @@ namespace MonitoringServiceCore.Services
                 {
                     try
                     {
-                        int count = CountWordOccurrences(contentLower, badWord);
+                        var positions = FindWordPositions(contentLower, badWord);
+                        int count = positions.Count;
 
                         if (count > 0)
                         {
                             analysis.FoundWords[badWord] = count;
                             analysis.TotalCount += count;
+
+                            foreach (var pos in positions)
+                            {
+                                analysis.WordPositions.Add(new WordPosition
+                                {
+                                    Word = badWord,
+                                    Position = pos,
+                                    LineNumber = GetLineNumber(content, pos),
+                                    Context = GetContextAround(content, pos, badWord.Length)
+                                });
+                            }
 
                             var context = GetWordContext(content, badWord);
                             if (context != null)
@@ -237,11 +282,64 @@ namespace MonitoringServiceCore.Services
                 }
             }
 
+            analysis.WordPositions = analysis.WordPositions.OrderBy(p => p.Position).ToList();
             analysis.WordsWithContext = analysis.WordsWithContext
                 .OrderByDescending(w => w.Count)
                 .ToList();
 
             return analysis;
+        }
+
+        // НОВЫЙ МЕТОД: Поиск всех позиций слова в тексте
+        private List<int> FindWordPositions(string text, string word)
+        {
+            var positions = new List<int>();
+            int index = 0;
+
+            while ((index = text.IndexOf(word, index, StringComparison.Ordinal)) != -1)
+            {
+                if (IsWholeWord(text, index, word.Length))
+                {
+                    positions.Add(index);
+                }
+                index += word.Length;
+            }
+
+            return positions;
+        }
+
+        // НОВЫЙ МЕТОД: Получение номера строки по позиции
+        private int GetLineNumber(string text, int position)
+        {
+            if (position < 0 || position >= text.Length)
+                return 0;
+
+            int lineNumber = 1;
+            for (int i = 0; i < position; i++)
+            {
+                if (text[i] == '\n')
+                    lineNumber++;
+            }
+            return lineNumber;
+        }
+
+        // НОВЫЙ МЕТОД: Получение контекста вокруг позиции
+        private string GetContextAround(string text, int position, int wordLength, int contextChars = 50)
+        {
+            int start = Math.Max(0, position - contextChars);
+            int end = Math.Min(text.Length, position + wordLength + contextChars);
+
+            string context = text.Substring(start, end - start);
+            context = context.Replace("\n", " ").Replace("\r", " ").Replace("\t", " ");
+
+            // Выделяем найденное слово
+            int wordPosInContext = position - start;
+            string wordInContext = text.Substring(position, wordLength);
+            context = context.Substring(0, wordPosInContext) +
+                     $"<mark class='bad-word'>{wordInContext}</mark>" +
+                     context.Substring(wordPosInContext + wordLength);
+
+            return $"...{context}...";
         }
 
         public string MaskProfanity(string text, char maskChar = '*')
@@ -376,11 +474,21 @@ namespace MonitoringServiceCore.Services
         }
     }
 
+    // НОВЫЙ КЛАСС: Позиция слова в тексте
+    public class WordPosition
+    {
+        public string Word { get; set; } = string.Empty;
+        public int Position { get; set; }
+        public int LineNumber { get; set; }
+        public string Context { get; set; } = string.Empty;
+    }
+
     public class MLDetectionResult
     {
         public bool HasProfanity { get; set; }
         public float Probability { get; set; }
         public Dictionary<string, int> FoundWords { get; set; } = new();
+        public List<WordPosition> WordPositions { get; set; } = new();
         public bool IsMLBased { get; set; }
     }
 
@@ -392,6 +500,7 @@ namespace MonitoringServiceCore.Services
         public Dictionary<string, int> BadWordsFound { get; set; } = new();
         public int TotalBadWordsCount { get; set; }
         public List<WordContext> BadWordsWithContext { get; set; } = new();
+        public List<WordPosition> WordPositions { get; set; } = new();
         public bool HasBadWords => TotalBadWordsCount > 0;
 
         public MLDetectionResult? MLDetectionResult { get; set; }
@@ -416,6 +525,13 @@ namespace MonitoringServiceCore.Services
                 {
                     Console.WriteLine($"  ... и еще {BadWordsFound.Count - 20} слов");
                 }
+
+                Console.WriteLine($"\n=== ПОЗИЦИИ МАТНЫХ СЛОВ ===");
+                foreach (var pos in WordPositions.Take(20))
+                {
+                    Console.WriteLine($"  Строка {pos.LineNumber}, позиция {pos.Position}: '{pos.Word}'");
+                    Console.WriteLine($"    Контекст: {pos.Context}");
+                }
             }
             else
             {
@@ -426,6 +542,12 @@ namespace MonitoringServiceCore.Services
             {
                 Console.WriteLine($"\n=== ML ДЕТЕКЦИЯ ===");
                 Console.WriteLine($"Вероятность наличия нецензурной лексики: {MLDetectionResult.Probability:P}");
+                Console.WriteLine($"Найдено ML слов: {MLDetectionResult.FoundWords.Sum(x => x.Value)}");
+
+                foreach (var pos in MLDetectionResult.WordPositions.Take(10))
+                {
+                    Console.WriteLine($"  ML: строка {pos.LineNumber}, слово '{pos.Word}'");
+                }
             }
 
             Console.WriteLine($"\nОбщее количество символов: {TotalCharacters}");
@@ -446,6 +568,7 @@ namespace MonitoringServiceCore.Services
         public Dictionary<string, int> FoundWords { get; set; } = new();
         public int TotalCount { get; set; }
         public List<WordContext> WordsWithContext { get; set; } = new();
+        public List<WordPosition> WordPositions { get; set; } = new();
         public bool HasBadWords => TotalCount > 0;
     }
 

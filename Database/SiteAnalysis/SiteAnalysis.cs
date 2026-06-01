@@ -8,6 +8,9 @@
         public string Url { get; set; } = string.Empty;
         public DateTime AnalyzedDate { get; set; }
         public int CountOfViolations { get; set; } = 0;
-       
+        public bool HasGoogleForms { get; set; }
+        public int FormsCount { get; set; }
+        public bool IsMalicious { get; set; }
+
     }
 }

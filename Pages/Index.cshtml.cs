@@ -67,6 +67,17 @@ namespace MonitoringServiceCore.Pages
         {
             Users = _dbContext.Users.ToList();
             DictionaryInfo = _BadWordAnalyzer.GetDictionaryInfo();
+
+            // Инициализация AnalysisResult с пустыми коллекциями, чтобы избежать null
+            if (AnalysisResult == null)
+            {
+                AnalysisResult = new AnalysisResult
+                {
+                    BadWordsFound = new Dictionary<string, int>(),
+                    BadWordsWithContext = new List<WordContext>(),
+                    WordPositions = new List<WordPosition>()
+                };
+            }
         }
         public async Task<IActionResult> OnPostCheckConsentAsync()
         {

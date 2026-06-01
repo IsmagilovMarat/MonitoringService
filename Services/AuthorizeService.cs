@@ -6,35 +6,57 @@ namespace MonitoringServiceCore.Services
 {
     public class AuthorizeService
     {
-        private MonitoringDbContext _dbContext; 
+        private readonly MonitoringDbContext _dbContext;
+
         public AuthorizeService(MonitoringDbContext dbContext)
         {
             _dbContext = dbContext;
         }
-        public User GetUserFromDb (string name, string password)
+
+        public User? GetUserFromDb(string name, string password)
         {
-            var user = _dbContext.Users.
-                Include(x => x.UserRole).
-                FirstOrDefault(x => x.Name == name && x.Password == password);
-               
-            if (user != null)
-            {
-                return user;
-            }
-            else
-            {
-                return null;
-            }
+            var user = _dbContext.Users
+                .Include(x => x.UserRole)
+                .FirstOrDefault(x => x.Name == name && x.Password == password);
+
+            return user;
         }
-        public bool CreateUser(string username, string secondName, string password, string roleName = "Client")
+
+        // НОВЫЙ МЕТОД: Поиск пользователя по email
+        public User? GetUserByEmail(string email, string password)
+        {
+            var user = _dbContext.Users
+                .Include(x => x.UserRole)
+                .FirstOrDefault(x => x.Email == email && x.Password == password);
+
+            return user;
+        }
+
+        // НОВЫЙ МЕТОД: Поиск пользователя по email (без пароля)
+        public User? GetUserByEmailOnly(string email)
+        {
+            var user = _dbContext.Users
+                .Include(x => x.UserRole)
+                .FirstOrDefault(x => x.Email == email);
+
+            return user;
+        }
+
+        public bool CreateUser(string username, string secondName, string email, string password, string roleName = "Client")
         {
             var role = _dbContext.Roles.FirstOrDefault(r => r.RoleName == roleName);
             if (role == null) return false;
 
+            // Проверка на существующего пользователя
+            var existingUser = _dbContext.Users.FirstOrDefault(u => u.Name == username || u.Email == email);
+            if (existingUser != null) return false;
+
             var user = new User
             {
+                Id = Guid.NewGuid(),
                 Name = username,
                 SecondName = secondName ?? string.Empty,
+                Email = email,
                 Password = password, // В реальном проекте хешируйте пароль!
                 UserRole = role,
                 RoleId = role.Id

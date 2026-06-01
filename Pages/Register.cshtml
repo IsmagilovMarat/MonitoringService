@@ -339,7 +339,28 @@
                     <i class="fas fa-signature"></i>
                 </div>
             </div>
-
+            <div class="form-group">
+                <label for="Email">
+                    <i class="fas fa-envelope"></i> Email *
+                </label>
+                <input type="email"
+                       id="Email"
+                       name="Input.Email"
+                       class="form-control @(ViewData.ModelState["Input.Email"]?.Errors.Count > 0 ? "is-invalid" : "")"
+                       placeholder="example@mail.ru"
+                       value="@Model.Input?.Email"
+                       required
+                       autocomplete="email">
+                <div class="input-icon">
+                    <i class="fas fa-envelope"></i>
+                </div>
+                @if (ViewData.ModelState["Input.Email"]?.Errors.Count > 0)
+                {
+                    <div class="invalid-feedback">
+                        @ViewData.ModelState["Input.Email"]?.Errors.First().ErrorMessage
+                    </div>
+                }
+            </div>
             <div class="form-group">
                 <label for="Password">
                     <i class="fas fa-key"></i> Пароль *

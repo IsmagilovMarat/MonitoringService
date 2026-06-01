@@ -4,6 +4,7 @@ using MonitoringServiceCore.Database;
 using MonitoringServiceCore.Database.dbContext;
 using MonitoringServiceCore.Database.Roles;
 using System.ComponentModel.DataAnnotations;
+using System.Text.RegularExpressions;
 
 namespace MonitoringServiceCore.Pages
 {
@@ -33,11 +34,26 @@ namespace MonitoringServiceCore.Pages
                 return Page();
             }
 
+            // Проверка валидности email
+            if (!IsValidEmail(Input.Email))
+            {
+                ErrorMessage = "Введите корректный email адрес";
+                return Page();
+            }
+
             // Проверка, существует ли пользователь с таким именем
             var existingUser = _dbContext.Users.FirstOrDefault(u => u.Name == Input.Username);
             if (existingUser != null)
             {
                 ErrorMessage = "Пользователь с таким именем уже существует";
+                return Page();
+            }
+
+            // Проверка, существует ли пользователь с таким email
+            var existingEmail = _dbContext.Users.FirstOrDefault(u => u.Email == Input.Email);
+            if (existingEmail != null)
+            {
+                ErrorMessage = "Пользователь с таким email уже зарегистрирован";
                 return Page();
             }
 
@@ -59,8 +75,10 @@ namespace MonitoringServiceCore.Pages
             // Создаем нового пользователя
             var newUser = new User
             {
+                Id = Guid.NewGuid(),
                 Name = Input.Username,
                 SecondName = Input.SecondName ?? string.Empty,
+                Email = Input.Email,
                 Password = Input.Password, // В реальном проекте нужно хешировать пароль!
                 UserRole = clientRole,
                 RoleId = clientRole.Id
@@ -74,9 +92,6 @@ namespace MonitoringServiceCore.Pages
 
                 // Очищаем форму
                 Input = new RegisterInputModel();
-
-                // Можно автоматически перенаправить на страницу входа через несколько секунд
-                // return RedirectToPage("Login");
             }
             catch (Exception ex)
             {
@@ -84,6 +99,23 @@ namespace MonitoringServiceCore.Pages
             }
 
             return Page();
+        }
+
+        private bool IsValidEmail(string email)
+        {
+            if (string.IsNullOrWhiteSpace(email))
+                return false;
+
+            try
+            {
+                // Простая проверка email через Regex
+                string pattern = @"^[^@\s]+@[^@\s]+\.[^@\s]+$";
+                return Regex.IsMatch(email, pattern, RegexOptions.IgnoreCase);
+            }
+            catch
+            {
+                return false;
+            }
         }
     }
 
@@ -97,6 +129,11 @@ namespace MonitoringServiceCore.Pages
         [Display(Name = "Фамилия")]
         [StringLength(50, ErrorMessage = "Фамилия не может быть длиннее 50 символов")]
         public string? SecondName { get; set; }
+
+        [Required(ErrorMessage = "Введите email")]
+        [EmailAddress(ErrorMessage = "Введите корректный email адрес")]
+        [Display(Name = "Email")]
+        public string Email { get; set; } = string.Empty;
 
         [Required(ErrorMessage = "Введите пароль")]
         [Display(Name = "Пароль")]

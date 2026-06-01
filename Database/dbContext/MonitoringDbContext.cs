@@ -15,10 +15,24 @@ namespace MonitoringServiceCore.Database.dbContext
         }
         protected override void OnModelCreating(ModelBuilder modelbuilder)
         {
-            modelbuilder.Entity<User>()
-                  .HasOne(u => u.UserRole)
-                  .WithMany(r=>r.UsersList)
+            modelbuilder.Entity<User>(entity =>
+            {
+                entity.HasKey(e => e.Id);
+                entity.Property(e => e.Name).HasMaxLength(50);
+                entity.Property(e => e.SecondName).HasMaxLength(100);
+                entity.Property(e => e.Email).IsRequired().HasMaxLength(50);
+                entity.HasIndex(e => e.Email).IsUnique();
+                entity.HasOne(u => u.UserRole)
+                  .WithMany(r => r.UsersList)
                   .HasForeignKey(u => u.RoleId);
+            });
+
+            modelbuilder.Entity<Role>(entity =>
+            {
+                entity.HasKey(e => e.Id);
+                entity.Property(e => e.RoleName).HasMaxLength(50).IsRequired();
+                entity.HasIndex(e => e.RoleName).IsUnique();
+            });
 
             modelbuilder.Entity<SiteAnalysis>(entity =>
             {
@@ -27,7 +41,12 @@ namespace MonitoringServiceCore.Database.dbContext
                 entity.Property(e => e.Url).IsRequired().HasMaxLength(500);
                 entity.Property(e => e.AnalyzedDate).IsRequired();
 
-                
+            });
+            modelbuilder.Entity<ExtremistMaterial>(entity =>
+            {
+                entity.HasKey(e => e.Id);
+                entity.Property(e => e.Number).HasMaxLength(50);
+                entity.Property(e => e.Description).HasMaxLength(1000);
             });
         }
         public DbSet<User> Users { get; set; }

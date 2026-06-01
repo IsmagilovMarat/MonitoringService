@@ -28,9 +28,23 @@ namespace MonitoringServiceCore.Database.dbContext
 
                 var users = new[]
                 {
-                new User { Name = "Admin1", SecondName = "Admin", Password = "admin", UserRole = adminRole },
-                new User { Name = "Marat", SecondName = "Ismagilov", Password = "marat321", UserRole = clientRole }
-            };
+        new User {
+            Id = Guid.NewGuid(),
+            Name = "Admin1",
+            SecondName = "Admin",
+            Email = "admin@monitoringservice.com",
+            Password = "admin",
+            UserRole = adminRole
+        },
+        new User {
+            Id = Guid.NewGuid(),
+            Name = "Marat",
+            SecondName = "Ismagilov",
+            Email = "marat@example.com",
+            Password = "marat321",
+            UserRole = clientRole
+        }
+    };
 
                 context.Users.AddRange(users);
                 context.SaveChanges();

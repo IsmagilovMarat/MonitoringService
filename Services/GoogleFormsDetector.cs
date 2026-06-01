@@ -8,20 +8,16 @@ namespace MonitoringServiceCore.Services
     public class GoogleFormsDetector
     {
         private readonly SiteDataDownloader _siteDataDownloader;
-        private readonly BadWordAnalyzer _BadWordAnalyzer;
+        private readonly BadWordAnalyzer _badWordAnalyzer;
         private readonly MonitoringDbContext _dbContext;
 
         private readonly List<Regex> _googleFormsPatterns = new List<Regex>
         {
             new Regex(@"https?://(?:docs\.google\.com/forms/d/e/|forms\.gle/)[a-zA-Z0-9_-]+", RegexOptions.IgnoreCase),
             new Regex(@"https?://(?:www\.)?google\.com/forms/about/", RegexOptions.IgnoreCase),
-            
             new Regex(@"<iframe[^>]*src=[""'](https?://(?:docs\.google\.com/forms/d/e/|forms\.gle/)[^""']+)[""'][^>]*>", RegexOptions.IgnoreCase),
-            
             new Regex(@"https?://(?:docs\.google\.com/forms)", RegexOptions.IgnoreCase),
-            
             new Regex(@"google\.com/forms/d/e/[a-zA-Z0-9_-]+/viewform", RegexOptions.IgnoreCase),
-            
             new Regex(@"data-forms-embed", RegexOptions.IgnoreCase),
             new Regex(@"google-form-embed", RegexOptions.IgnoreCase)
         };
@@ -41,11 +37,11 @@ namespace MonitoringServiceCore.Services
 
         public GoogleFormsDetector(
             SiteDataDownloader siteDataDownloader,
-            BadWordAnalyzer BadWordAnalyzer,
+            BadWordAnalyzer badWordAnalyzer,
             MonitoringDbContext dbContext)
         {
             _siteDataDownloader = siteDataDownloader ?? throw new ArgumentNullException(nameof(siteDataDownloader));
-            _BadWordAnalyzer = BadWordAnalyzer ?? throw new ArgumentNullException(nameof(BadWordAnalyzer));
+            _badWordAnalyzer = badWordAnalyzer ?? throw new ArgumentNullException(nameof(badWordAnalyzer));
             _dbContext = dbContext ?? throw new ArgumentNullException(nameof(dbContext));
         }
 
@@ -74,14 +70,12 @@ namespace MonitoringServiceCore.Services
                 if (result.HasGoogleForms)
                 {
                     result.FormUrls = ExtractGoogleFormUrls(htmlContent);
-
                     result.FormTypes = DetermineFormTypes(htmlContent);
 
-                    result.SurroundingContentAnalysis = AnalyzeSurroundingContent(htmlContent);
+                    // ИСПРАВЛЕНО: добавляем await
+                    result.SurroundingContentAnalysis = await AnalyzeSurroundingContentAsync(htmlContent);
 
                     result.IsPotentiallyMalicious = CheckForMaliciousForms(htmlContent);
-
-                    result.FormDetails = ExtractFormDetails(htmlContent);
                 }
 
                 result.SecurityAnalysis = AnalyzePageSecurity(htmlContent);
@@ -103,7 +97,6 @@ namespace MonitoringServiceCore.Services
             return result;
         }
 
-       
         private bool DetectGoogleFormsInHtml(string html)
         {
             if (string.IsNullOrEmpty(html))
@@ -144,6 +137,7 @@ namespace MonitoringServiceCore.Services
 
             return urls;
         }
+
         private List<string> DetermineFormTypes(string html)
         {
             var types = new List<string>();
@@ -166,7 +160,8 @@ namespace MonitoringServiceCore.Services
             return types.Distinct().ToList();
         }
 
-        private SurroundingContentAnalysis AnalyzeSurroundingContent(string html)
+        // ИСПРАВЛЕНО: добавлен async и возвращается Task
+        private async Task<SurroundingContentAnalysis> AnalyzeSurroundingContentAsync(string html)
         {
             var analysis = new SurroundingContentAnalysis();
 
@@ -176,19 +171,21 @@ namespace MonitoringServiceCore.Services
             {
                 string formContent = formMatch.Groups[1].Value;
 
-                var badWordsAnalysis = _BadWordAnalyzer.AnalyzeBadWords(formContent);
+                // ИСПРАВЛЕНО: добавлен await и используется синхронный метод AnalyzeContent
+                var badWordsAnalysis = _badWordAnalyzer.AnalyzeContent(formContent);
 
                 if (badWordsAnalysis.HasBadWords)
                 {
                     analysis.ContainsProfanity = true;
-                    analysis.ProfanityCount += badWordsAnalysis.TotalCount;
+                    analysis.ProfanityCount += badWordsAnalysis.TotalBadWordsCount;
                     analysis.ProfanityExamples.AddRange(
-                        badWordsAnalysis.FoundWords.Keys.Take(5));
+                        badWordsAnalysis.BadWordsFound.Keys.Take(5));
                 }
 
                 if (formContent.Contains("password", StringComparison.OrdinalIgnoreCase) ||
                     formContent.Contains("credit card", StringComparison.OrdinalIgnoreCase) ||
-                    formContent.Contains("ssn", StringComparison.OrdinalIgnoreCase))
+                    formContent.Contains("ssn", StringComparison.OrdinalIgnoreCase) ||
+                    formContent.Contains("card number", StringComparison.OrdinalIgnoreCase))
                 {
                     analysis.ContainsSensitiveFields = true;
                 }
@@ -196,21 +193,30 @@ namespace MonitoringServiceCore.Services
 
             return analysis;
         }
+
         private bool CheckForMaliciousForms(string html)
         {
             bool hasPhishingIndicators = html.Contains("verify your account", StringComparison.OrdinalIgnoreCase) ||
                                         html.Contains("confirm your identity", StringComparison.OrdinalIgnoreCase) ||
-                                        html.Contains("update your information", StringComparison.OrdinalIgnoreCase);
+                                        html.Contains("update your information", StringComparison.OrdinalIgnoreCase) ||
+                                        html.Contains("unusual activity", StringComparison.OrdinalIgnoreCase) ||
+                                        html.Contains("suspicious activity", StringComparison.OrdinalIgnoreCase);
 
             bool requestsSensitiveData = html.Contains("password", StringComparison.OrdinalIgnoreCase) &&
                                         (html.Contains("login", StringComparison.OrdinalIgnoreCase) ||
-                                         html.Contains("sign in", StringComparison.OrdinalIgnoreCase));
+                                         html.Contains("sign in", StringComparison.OrdinalIgnoreCase) ||
+                                         html.Contains("verify", StringComparison.OrdinalIgnoreCase));
 
             bool suspiciousDomain = html.Contains("google.com") &&
                                    (html.Contains("gmail.com", StringComparison.OrdinalIgnoreCase) ||
                                     html.Contains("drive.google.com", StringComparison.OrdinalIgnoreCase));
 
-            return hasPhishingIndicators || requestsSensitiveData || suspiciousDomain;
+            // Дополнительные фишинговые индикаторы
+            bool urgentLanguage = html.Contains("immediately", StringComparison.OrdinalIgnoreCase) ||
+                                  html.Contains("urgent", StringComparison.OrdinalIgnoreCase) ||
+                                  html.Contains("as soon as possible", StringComparison.OrdinalIgnoreCase);
+
+            return hasPhishingIndicators || requestsSensitiveData || suspiciousDomain || urgentLanguage;
         }
 
         private List<FormDetail> ExtractFormDetails(string html)
@@ -222,13 +228,23 @@ namespace MonitoringServiceCore.Services
             for (int i = 0; i < formMatches.Count; i++)
             {
                 var match = formMatches[i];
+
+                string action = Regex.Match(match.Value, @"action=[""']([^""']+)[""']", RegexOptions.IgnoreCase).Groups[1].Value;
+                string method = Regex.Match(match.Value, @"method=[""']([^""']+)[""']", RegexOptions.IgnoreCase).Groups[1].Value;
+
+                // Проверяем, является ли форма Google Forms
+                bool isGoogleForm = action.Contains("google.com/forms") ||
+                                   action.Contains("docs.google.com/forms") ||
+                                   action.Contains("forms.gle");
+
                 var detail = new FormDetail
                 {
                     Index = i + 1,
-                    Action = Regex.Match(match.Value, @"action=[""']([^""']+)[""']", RegexOptions.IgnoreCase).Groups[1].Value,
-                    Method = Regex.Match(match.Value, @"method=[""']([^""']+)[""']", RegexOptions.IgnoreCase).Groups[1].Value,
+                    Action = string.IsNullOrEmpty(action) ? "Не указан" : action,
+                    Method = string.IsNullOrEmpty(method) ? "get" : method.ToLower(),
                     InputFieldsCount = Regex.Matches(match.Value, @"<input", RegexOptions.IgnoreCase).Count,
-                    HasSubmitButton = Regex.IsMatch(match.Value, @"<button[^>]*type=[""']submit[""']|<input[^>]*type=[""']submit[""']", RegexOptions.IgnoreCase)
+                    HasSubmitButton = Regex.IsMatch(match.Value, @"<button[^>]*type=[""']submit[""']|<input[^>]*type=[""']submit[""']", RegexOptions.IgnoreCase),
+                    IsGoogleForm = isGoogleForm
                 };
 
                 formDetails.Add(detail);
@@ -260,6 +276,7 @@ namespace MonitoringServiceCore.Services
 
             return analysis;
         }
+
         private async Task SaveDetectionResultToDatabaseAsync(string url, GoogleFormsDetectionResult result)
         {
             try
@@ -268,8 +285,14 @@ namespace MonitoringServiceCore.Services
                 {
                     Url = url,
                     DomainUrl = new Uri(url).Host,
+                    AnalyzedDate = DateTime.UtcNow,
+                    HasGoogleForms = result.HasGoogleForms,
+                    FormsCount = result.FormUrls?.Count ?? 0,
+                    IsMalicious = result.IsPotentiallyMalicious
                 };
 
+                _dbContext.SiteAnalyses.Add(siteAnalysis);
+                await _dbContext.SaveChangesAsync();
 
                 Console.WriteLine($"Результат проверки для {url} сохранен в БД");
             }
@@ -279,7 +302,6 @@ namespace MonitoringServiceCore.Services
             }
         }
 
-        
         public async Task<List<GoogleFormsDetectionResult>> DetectGoogleFormsBatchAsync(List<string> urls)
         {
             var results = new List<GoogleFormsDetectionResult>();
@@ -289,7 +311,7 @@ namespace MonitoringServiceCore.Services
                 var result = await DetectGoogleFormsAsync(url);
                 results.Add(result);
 
-                await Task.Delay(100);
+                await Task.Delay(100); // Задержка между запросами
             }
 
             return results;
@@ -305,7 +327,44 @@ namespace MonitoringServiceCore.Services
                 TotalFormsFound = 0
             };
 
+            try
+            {
+                var siteAnalyses = _dbContext.SiteAnalyses
+                    .Where(s => s.DomainUrl == domain)
+                    .ToList();
+
+                stats.TotalPagesChecked = siteAnalyses.Count;
+                stats.PagesWithGoogleForms = siteAnalyses.Count(s => s.HasGoogleForms);
+                stats.TotalFormsFound = siteAnalyses.Sum(s => s.FormsCount);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Ошибка получения статистики: {ex.Message}");
+            }
+
             return stats;
         }
+    }
+
+    // Дополнительные классы, если их нет
+    public class FormDetail
+    {
+        public int Index { get; set; }
+        public string Action { get; set; } = string.Empty;
+        public string Method { get; set; } = string.Empty;
+        public int InputFieldsCount { get; set; }
+        public bool HasSubmitButton { get; set; }
+        public bool IsGoogleForm { get; set; }
+    }
+
+    public class DomainStatistics
+    {
+        public string Domain { get; set; } = string.Empty;
+        public int TotalPagesChecked { get; set; }
+        public int PagesWithGoogleForms { get; set; }
+        public int TotalFormsFound { get; set; }
+        public double Percentage => TotalPagesChecked > 0
+            ? (double)PagesWithGoogleForms / TotalPagesChecked * 100
+            : 0;
     }
 }
