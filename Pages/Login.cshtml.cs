@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using MonitoringServiceCore.Database.Roles;
 using MonitoringServiceCore.Services;
+using System.ComponentModel.DataAnnotations;
 using System.Security.Claims;
 
 namespace MonitoringServiceCore.Pages
@@ -12,16 +13,13 @@ namespace MonitoringServiceCore.Pages
         private readonly AuthorizeService _authService;
 
         [BindProperty]
-        public string? Username { get; set; }
-
-        [BindProperty]
+        [Required(ErrorMessage = "Введите email")]
+        [EmailAddress(ErrorMessage = "Введите корректный email адрес")]
         public string? Email { get; set; }
 
         [BindProperty]
+        [Required(ErrorMessage = "Введите пароль")]
         public required string Password { get; set; }
-
-        [BindProperty]
-        public bool UseEmailLogin { get; set; } = false;
 
         public string? ErrorMessage { get; set; }
 
@@ -36,30 +34,17 @@ namespace MonitoringServiceCore.Pages
 
         public async Task<IActionResult> OnPostAsync()
         {
-            User? user = null;
+            if (!ModelState.IsValid)
+            {
+                return Page();
+            }
 
-            // Вход по email или по имени пользователя
-            if (UseEmailLogin && !string.IsNullOrEmpty(Email))
+            // Вход только по email
+            var user = _authService.GetUserByEmail(Email!, Password);
+
+            if (user == null)
             {
-                user = _authService.GetUserByEmail(Email, Password);
-                if (user == null)
-                {
-                    ErrorMessage = "Неверный email или пароль";
-                    return Page();
-                }
-            }
-            else if (!string.IsNullOrEmpty(Username))
-            {
-                user = _authService.GetUserFromDb(Username, Password);
-                if (user == null)
-                {
-                    ErrorMessage = "Неверное имя пользователя или пароль";
-                    return Page();
-                }
-            }
-            else
-            {
-                ErrorMessage = "Введите имя пользователя или email";
+                ErrorMessage = "Неверный email или пароль";
                 return Page();
             }
 

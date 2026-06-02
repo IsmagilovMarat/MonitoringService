@@ -111,6 +111,16 @@
             background: white;
         }
 
+        .form-control.is-invalid {
+            border-color: #e3342f;
+        }
+
+        .invalid-feedback {
+            color: #e3342f;
+            font-size: 12px;
+            margin-top: 5px;
+        }
+
         .input-icon {
             position: absolute;
             right: 20px;
@@ -190,6 +200,10 @@
             font-size: 18px;
         }
 
+        .password-toggle:hover {
+            color: #667eea;
+        }
+
         .floating-icon {
             position: absolute;
             font-size: 24px;
@@ -197,73 +211,11 @@
             animation: float 6s ease-in-out infinite;
         }
 
-        .floating-icon:nth-child(1) {
-            top: 10%;
-            left: 10%;
-        }
-
-        .floating-icon:nth-child(2) {
-            top: 20%;
-            right: 15%;
-            animation-delay: 1s;
-        }
-
-        .floating-icon:nth-child(3) {
-            bottom: 30%;
-            left: 15%;
-            animation-delay: 2s;
-        }
-
-        .floating-icon:nth-child(4) {
-            bottom: 20%;
-            right: 10%;
-            animation-delay: 3s;
-        }
-
-        .floating-icon:nth-child(5) {
-            top: 40%;
-            left: 20%;
-            animation-delay: 4s;
-        }
-
-        .login-tabs {
-            display: flex;
-            gap: 10px;
-            margin-bottom: 25px;
-            border-bottom: 2px solid #e0e0e0;
-        }
-
-        .login-tab {
-            flex: 1;
-            text-align: center;
-            padding: 10px;
-            cursor: pointer;
-            background: none;
-            border: none;
-            font-size: 16px;
-            font-weight: 500;
-            color: #7f8c8d;
-            transition: all 0.3s ease;
-        }
-
-        .login-tab.active {
-            color: #667eea;
-            border-bottom: 2px solid #667eea;
-            margin-bottom: -2px;
-        }
-
-        .login-tab:hover {
-            color: #667eea;
-        }
-
-        .login-field {
-            transition: all 0.3s ease;
-        }
-
-        .login-field.hidden {
-            display: none;
-        }
-       
+        .floating-icon:nth-child(1) { top: 10%; left: 10%; }
+        .floating-icon:nth-child(2) { top: 20%; right: 15%; animation-delay: 1s; }
+        .floating-icon:nth-child(3) { bottom: 30%; left: 15%; animation-delay: 2s; }
+        .floating-icon:nth-child(4) { bottom: 20%; right: 10%; animation-delay: 3s; }
+        .floating-icon:nth-child(5) { top: 40%; left: 20%; animation-delay: 4s; }
     </style>
 </head>
 <body>
@@ -289,64 +241,46 @@
             </div>
         }
 
-        <!-- Вкладки для выбора типа входа -->
-        <div class="login-tabs">
-            <button type="button" class="login-tab active" onclick="switchTab('username')">
-                <i class="fas fa-user"></i> По имени
-            </button>
-            <button type="button" class="login-tab" onclick="switchTab('email')">
-                <i class="fas fa-envelope"></i> По email
-            </button>
-        </div>
-
         <form method="post" id="loginForm">
-            <!-- Поле для входа по имени пользователя -->
-            <div id="usernameField" class="login-field">
-                <div class="form-group">
-                    <label for="username"><i class="fas fa-user"></i> Имя пользователя</label>
-                    <input type="text"
-                           id="username"
-                           name="Username"
-                           class="form-control"
-                           placeholder="Введите имя пользователя"
-                           autocomplete="username">
-                    <div class="input-icon">
-                        <i class="fas fa-user-circle"></i>
-                    </div>
+            <div class="form-group">
+                <label for="email"><i class="fas fa-envelope"></i> Email</label>
+                <input type="email"
+                       id="email"
+                       name="Email"
+                       class="form-control @(ViewData.ModelState["Email"]?.Errors.Count > 0 ? "is-invalid" : "")"
+                       placeholder="example@mail.ru"
+                       value="@Model.Email"
+                       required
+                       autocomplete="email">
+                <div class="input-icon">
+                    <i class="fas fa-envelope"></i>
                 </div>
-            </div>
-
-            <!-- Поле для входа по email -->
-            <div id="emailField" class="login-field hidden">
-                <div class="form-group">
-                    <label for="email"><i class="fas fa-envelope"></i> Email</label>
-                    <input type="email"
-                           id="email"
-                           name="Email"
-                           class="form-control"
-                           placeholder="example@mail.ru"
-                           autocomplete="email">
-                    <div class="input-icon">
-                        <i class="fas fa-envelope"></i>
+                @if (ViewData.ModelState["Email"]?.Errors.Count > 0)
+                {
+                    <div class="invalid-feedback">
+                        @ViewData.ModelState["Email"]?.Errors.First().ErrorMessage
                     </div>
-                </div>
+                }
             </div>
-
-            <!-- Скрытое поле для определения метода входа -->
-            <input type="hidden" id="UseEmailLogin" name="UseEmailLogin" value="false" />
 
             <div class="form-group">
                 <label for="password"><i class="fas fa-key"></i> Пароль</label>
                 <input type="password"
                        id="password"
                        name="Password"
-                       class="form-control"
+                       class="form-control @(ViewData.ModelState["Password"]?.Errors.Count > 0 ? "is-invalid" : "")"
                        placeholder="Введите пароль"
                        required
                        autocomplete="current-password">
                 <button type="button" class="password-toggle" onclick="togglePassword()">
                     <i class="fas fa-eye"></i>
                 </button>
+                @if (ViewData.ModelState["Password"]?.Errors.Count > 0)
+                {
+                    <div class="invalid-feedback">
+                        @ViewData.ModelState["Password"]?.Errors.First().ErrorMessage
+                    </div>
+                }
             </div>
 
             <button type="submit" class="btn-login" id="loginButton">
@@ -365,32 +299,6 @@
     </div>
 
     <script>
-        // Переключение между вкладками
-        function switchTab(type) {
-            const usernameField = document.getElementById('usernameField');
-            const emailField = document.getElementById('emailField');
-            const useEmailLogin = document.getElementById('UseEmailLogin');
-            const tabs = document.querySelectorAll('.login-tab');
-
-            if (type === 'username') {
-                usernameField.classList.remove('hidden');
-                emailField.classList.add('hidden');
-                useEmailLogin.value = 'false';
-                tabs[0].classList.add('active');
-                tabs[1].classList.remove('active');
-                document.getElementById('username').required = true;
-                document.getElementById('email').required = false;
-            } else {
-                usernameField.classList.add('hidden');
-                emailField.classList.remove('hidden');
-                useEmailLogin.value = 'true';
-                tabs[0].classList.remove('active');
-                tabs[1].classList.add('active');
-                document.getElementById('username').required = false;
-                document.getElementById('email').required = true;
-            }
-        }
-
         // Функция для показа/скрытия пароля
         function togglePassword() {
             const passwordInput = document.getElementById('password');
@@ -409,45 +317,35 @@
 
         // Функция для показа информации
         function showInfo() {
-            alert('Для входа используйте:\n- Имя пользователя или email\n- Пароль, указанный при регистрации');
+            alert('Для входа используйте email и пароль, указанные при регистрации');
         }
 
-      
+        // Валидация email
+        function isValidEmail(email) {
+         
+            return emailRegex.test(email);
+        }
 
         // Обработка отправки формы
         document.getElementById('loginForm').addEventListener('submit', function(e) {
             const loginButton = document.getElementById('loginButton');
             const loginText = document.getElementById('loginText');
             const loadingSpinner = document.getElementById('loadingSpinner');
-            const useEmailLogin = document.getElementById('UseEmailLogin').value === 'true';
-
-            // Валидация перед отправкой
-            if (useEmailLogin) {
-                const email = document.getElementById('email').value;
-                if (!email) {
-                    e.preventDefault();
-                    alert('Введите email');
-                    return false;
-                }
-                if (!isValidEmail(email)) {
-                    e.preventDefault();
-                    alert('Введите корректный email (например: user@example.com)');
-                    return false;
-                }
-            } else {
-                const username = document.getElementById('username').value;
-                if (!username) {
-                    e.preventDefault();
-                    alert('Введите имя пользователя');
-                    return false;
-                }
-                if (username.length < 3) {
-                    e.preventDefault();
-                    alert('Имя пользователя должно содержать минимум 3 символа');
-                    return false;
-                }
+            
+            // Валидация email
+            const email = document.getElementById('email').value;
+            if (!email) {
+                e.preventDefault();
+                alert('Введите email');
+                return false;
+            }
+            if (!isValidEmail(email)) {
+                e.preventDefault();
+                alert('Введите корректный email (например: user@example.com)');
+                return false;
             }
 
+            // Валидация пароля
             const password = document.getElementById('password').value;
             if (!password) {
                 e.preventDefault();
@@ -467,7 +365,7 @@
 
         // Автофокус
         document.addEventListener('DOMContentLoaded', function() {
-            document.getElementById('username').focus();
+            document.getElementById('email').focus();
 
             // Плавное появление формы
             const container = document.querySelector('.login-container');

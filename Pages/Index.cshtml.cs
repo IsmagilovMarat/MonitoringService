@@ -17,121 +17,93 @@ namespace MonitoringServiceCore.Pages
     {
         private readonly MonitoringDbContext _dbContext;
         private readonly SiteDataDownloader _siteDataDownloader;
-        private readonly BadWordAnalyzer _BadWordAnalyzer;
+        private readonly BadWordAnalyzer _badWordAnalyzer;
         private readonly GoogleFormsDetector _googleFormsDetector;
         private readonly PersonalDataConsentService _consentService;
         private readonly ExtremistMaterialChecker _extremistChecker;
-        private DataJob _dj;
-        public ExtremistCheckResult? ExtremistCheckResult { get; set; }
+        private readonly IEmailService _emailService;
 
+        public ExtremistCheckResult? ExtremistCheckResult { get; set; }
         public List<User> Users { get; set; } = new List<User>();
+        public AnalysisResult? AnalysisResult { get; set; }
+        public DictionaryInfo? DictionaryInfo { get; set; }
+        public GoogleFormsDetectionResult? GoogleFormsResult { get; set; }
+        public ConsentCheckResult? ConsentResult { get; set; }
+        public string? ErrorMessage { get; set; }
+        public bool HasResults { get; set; }
 
         [BindProperty]
         [Required(ErrorMessage = "Введите URL сайта")]
         [Url(ErrorMessage = "Введите корректный URL")]
         public string? SiteUrl { get; set; }
 
-        public AnalysisResult? AnalysisResult { get; set; }
-        public DictionaryInfo? DictionaryInfo { get; set; }
-        public GoogleFormsDetectionResult? GoogleFormsResult { get; set; }
-
-        public string? HtmlContent { get; set; }
-        public string? ErrorMessage { get; set; }
-        public bool HasAnalysis => AnalysisResult != null;
-        public bool HasGoogleFormsCheck => GoogleFormsResult != null;
-        public bool ShowBadWordsDetails { get; set; }
-        public bool ShowGoogleFormsDetails { get; set; }
-
-        private readonly IEmailService _emailService;
         public IndexModel(
             MonitoringDbContext dbContext,
             SiteDataDownloader siteDataDownloader,
-            BadWordAnalyzer BadWordAnalyzer,
+            BadWordAnalyzer badWordAnalyzer,
             GoogleFormsDetector googleFormsDetector,
             PersonalDataConsentService consentService,
             ExtremistMaterialChecker extremistChecker,
-            IEmailService emailService,DataJob dj)
+            IEmailService emailService)
         {
             _emailService = emailService;
             _dbContext = dbContext;
             _siteDataDownloader = siteDataDownloader;
-            _BadWordAnalyzer = BadWordAnalyzer;
+            _badWordAnalyzer = badWordAnalyzer;
             _googleFormsDetector = googleFormsDetector;
             _consentService = consentService;
             _extremistChecker = extremistChecker;
-            _dj = dj;
         }
-        public ConsentCheckResult? ConsentResult { get; set; }
 
         public void OnGet()
         {
             Users = _dbContext.Users.ToList();
-            DictionaryInfo = _BadWordAnalyzer.GetDictionaryInfo();
-
-            // Инициализация AnalysisResult с пустыми коллекциями, чтобы избежать null
-            if (AnalysisResult == null)
-            {
-                AnalysisResult = new AnalysisResult
-                {
-                    BadWordsFound = new Dictionary<string, int>(),
-                    BadWordsWithContext = new List<WordContext>(),
-                    WordPositions = new List<WordPosition>()
-                };
-            }
+            DictionaryInfo = _badWordAnalyzer.GetDictionaryInfo();
         }
-        public async Task<IActionResult> OnPostCheckConsentAsync()
-        {
-            if (string.IsNullOrEmpty(SiteUrl))
-            {
-                ErrorMessage = "URL не указан";
-                return Page();
-            }
 
-            try
-            {
-                ConsentResult = await _consentService.CheckConsentAsync(SiteUrl);
-                TempData["SuccessMessage"] = ConsentResult.IsCompliant
-                    ? "Согласие на обработку ПД найдено"
-                    : "Предупреждение: на странице не обнаружено явного согласия на обработку ПД";
-            }
-            catch (Exception ex)
-            {
-                ErrorMessage = ex.Message;
-            }
-            return Page();
-        }
         public async Task<IActionResult> OnPostAnalyzeSiteAsync()
         {
             if (!ModelState.IsValid)
             {
                 Users = _dbContext.Users.ToList();
-                DictionaryInfo = _BadWordAnalyzer.GetDictionaryInfo();
+                DictionaryInfo = _badWordAnalyzer.GetDictionaryInfo();
                 return Page();
             }
 
             try
             {
-                HtmlContent = await _siteDataDownloader.DownloadHtmlAsync(SiteUrl!);
-                ExtremistCheckResult = await _extremistChecker.CheckContentAsync(HtmlContent, SiteUrl!);
+                HasResults = true;
 
-                // Убрали параметр "NET"
-                AnalysisResult = _BadWordAnalyzer.AnalyzeContent(HtmlContent);
+                // Загружаем HTML
+                var htmlContent = await _siteDataDownloader.DownloadHtmlAsync(SiteUrl!);
 
+                // 1. Проверка экстремистских материалов
+              //  ExtremistCheckResult = await _extremistChecker.CheckContentAsync(htmlContent, SiteUrl!);
+
+                // 2. Проверка нецензурной лексики
+                AnalysisResult = _badWordAnalyzer.AnalyzeContent(htmlContent);
+
+                // 3. Проверка Google Forms
                 GoogleFormsResult = await _googleFormsDetector.DetectGoogleFormsAsync(SiteUrl!);
 
-                DictionaryInfo = _BadWordAnalyzer.GetDictionaryInfo();
+                // 4. Проверка согласия на обработку ПД
+                ConsentResult = await _consentService.CheckConsentAsync(SiteUrl!);
+
+                // Обновляем информацию о словаре
+                DictionaryInfo = _badWordAnalyzer.GetDictionaryInfo();
                 Users = _dbContext.Users.ToList();
 
+                // Собираем сообщения
                 var messages = new List<string>();
 
                 if (ExtremistCheckResult.HasExtremistMaterials)
                 {
-                    messages.Add($"Обнаружено {ExtremistCheckResult.FoundMaterials.Count} упоминаний материалов из федерального списка экстремистских материалов");
+                    messages.Add($"Обнаружено {ExtremistCheckResult.FoundMaterials.Count} экстремистских материалов");
                 }
 
                 if (AnalysisResult.HasBadWords)
                 {
-                    messages.Add($"Обнаружено {AnalysisResult.TotalBadWordsCount} нецензурных слов ({AnalysisResult.BadWordsFound.Count} уникальных)");
+                    messages.Add($"Обнаружено {AnalysisResult.TotalBadWordsCount} нецензурных слов");
                 }
 
                 if (GoogleFormsResult.HasGoogleForms)
@@ -139,8 +111,13 @@ namespace MonitoringServiceCore.Pages
                     messages.Add($"Обнаружено {GoogleFormsResult.FormUrls.Count} Google Form(s)");
                     if (GoogleFormsResult.IsPotentiallyMalicious)
                     {
-                        messages.Add("⚠️ ВНИМАНИЕ: Обнаружены потенциально вредоносные формы!");
+                        messages.Add("⚠️ Потенциально вредоносные формы!");
                     }
+                }
+
+                if (ConsentResult != null && !ConsentResult.IsCompliant)
+                {
+                    messages.Add("⚠️ Отсутствует явное согласие на обработку ПД");
                 }
 
                 if (messages.Any())
@@ -149,33 +126,42 @@ namespace MonitoringServiceCore.Pages
                 }
                 else
                 {
-                    TempData["SuccessMessage"] = "Анализ завершен! Нецензурные слова и Google Forms не обнаружены.";
+                    TempData["SuccessMessage"] = "Анализ завершен! Нарушений не обнаружено.";
                 }
 
-                // Отправка email
-                string adminEmail = "maratismage@mail.ru";
-                string subject = $"Результаты анализа сайта {SiteUrl}";
+                // Отправка email уведомления
+                await SendEmailNotificationAsync();
+            }
+            catch (Exception ex)
+            {
+                ErrorMessage = $"Ошибка при анализе сайта: {ex.Message}";
+                Console.WriteLine($"Ошибка: {ex.Message}");
+            }
 
+            return Page();
+        }
+
+        private async Task SendEmailNotificationAsync()
+        {
+            try
+            {
+                var subject = $"Результаты анализа сайта {SiteUrl}";
                 var messageBuilder = new System.Text.StringBuilder();
                 messageBuilder.AppendLine($"<h2>Анализ сайта {SiteUrl} завершён</h2>");
                 messageBuilder.AppendLine($"<p><strong>Время проверки:</strong> {DateTime.Now:dd.MM.yyyy HH:mm:ss}</p>");
 
                 if (ExtremistCheckResult?.HasExtremistMaterials == true)
-                {
-                    messageBuilder.AppendLine($"<p style='color:red'>⚠️ Обнаружено {ExtremistCheckResult.FoundMaterials.Count} упоминаний экстремистских материалов.</p>");
-                }
+                    messageBuilder.AppendLine($"<p style='color:red'>⚠️ Экстремистские материалы: {ExtremistCheckResult.FoundMaterials.Count}</p>");
+
                 if (AnalysisResult?.HasBadWords == true)
-                {
-                    messageBuilder.AppendLine($"<p style='color:orange'>⚠️ Обнаружено {AnalysisResult.TotalBadWordsCount} нецензурных слов.</p>");
-                }
+                    messageBuilder.AppendLine($"<p style='color:orange'>⚠️ Нецензурные слова: {AnalysisResult.TotalBadWordsCount}</p>");
+
                 if (GoogleFormsResult?.HasGoogleForms == true)
-                {
-                    messageBuilder.AppendLine($"<p style='color:orange'>⚠️ Обнаружено {GoogleFormsResult.FormUrls.Count} Google Form(s).</p>");
-                }
+                    messageBuilder.AppendLine($"<p style='color:orange'>⚠️ Google Forms: {GoogleFormsResult.FormUrls.Count}</p>");
+
                 if (ConsentResult?.IsCompliant == false)
-                {
-                    messageBuilder.AppendLine($"<p style='color:red'>⚠️ Отсутствует явное согласие на обработку персональных данных.</p>");
-                }
+                    messageBuilder.AppendLine($"<p style='color:red'>⚠️ Нет согласия на обработку ПД</p>");
+
                 if (!(ExtremistCheckResult?.HasExtremistMaterials == true ||
                       AnalysisResult?.HasBadWords == true ||
                       GoogleFormsResult?.HasGoogleForms == true ||
@@ -184,49 +170,12 @@ namespace MonitoringServiceCore.Pages
                     messageBuilder.AppendLine("<p style='color:green'>✅ Нарушений не обнаружено.</p>");
                 }
 
-                SendEmailInBackground("fullstack_web_developer@mail.ru", subject, messageBuilder.ToString());
+                await _emailService.SendEmailAsync("fullstack_web_developer@mail.ru", subject, messageBuilder.ToString());
             }
             catch (Exception ex)
             {
-                ErrorMessage = $"Ошибка при анализе сайта: {ex.Message}";
-                Users = _dbContext.Users.ToList();
-                DictionaryInfo = _BadWordAnalyzer.GetDictionaryInfo();
-                Console.WriteLine($"Ошибка: {ex.Message}");
+                Console.WriteLine($"Ошибка отправки email: {ex.Message}");
             }
-
-            return Page();
-        }
-        private void SendEmailInBackground(string to, string subject, string body)
-        {
-            _ = Task.Run(async () =>
-            {
-                try
-                {
-                    await _emailService.SendEmailAsync(to, subject, body);
-                }
-                catch (Exception ex)
-                {
-                    // Логируем ошибку, но не показываем пользователю
-                    Console.WriteLine($"Ошибка фоновой отправки email: {ex.Message}");
-                    // Если у вас есть ILogger, используйте его
-                }
-            });
-        }
-
-        public IActionResult OnPostToggleBadWordsDetails()
-        {
-            ShowBadWordsDetails = !ShowBadWordsDetails;
-            Users = _dbContext.Users.ToList();
-            DictionaryInfo = _BadWordAnalyzer.GetDictionaryInfo();
-            return Page();
-        }
-
-        public IActionResult OnPostToggleGoogleFormsDetails()
-        {
-            ShowGoogleFormsDetails = !ShowGoogleFormsDetails;
-            Users = _dbContext.Users.ToList();
-            DictionaryInfo = _BadWordAnalyzer.GetDictionaryInfo();
-            return Page();
         }
     }
 }
