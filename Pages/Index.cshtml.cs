@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using MonitoringServiceCore.Database;
+using MonitoringServiceCore.Database.BadWord;
 using MonitoringServiceCore.Database.dbContext;
 using MonitoringServiceCore.Database.GoogleForms;
 using MonitoringServiceCore.Database.Roles;
@@ -57,8 +58,20 @@ namespace MonitoringServiceCore.Pages
 
         public void OnGet()
         {
-            Users = _dbContext.Users.ToList();
-            DictionaryInfo = _badWordAnalyzer.GetDictionaryInfo();
+            try
+            {
+                Users = _dbContext.Users.ToList();
+                DictionaryInfo = _badWordAnalyzer.GetDictionaryInfo();
+
+                AnalysisResult = new AnalysisResult();
+                GoogleFormsResult = new GoogleFormsDetectionResult();
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Ошибка при загрузке страницы: {ex.Message}");
+                Users = new List<User>();
+                DictionaryInfo = new DictionaryInfo();
+            }
         }
 
         public async Task<IActionResult> OnPostAnalyzeSiteAsync()
@@ -77,8 +90,8 @@ namespace MonitoringServiceCore.Pages
                 // Загружаем HTML
                 var htmlContent = await _siteDataDownloader.DownloadHtmlAsync(SiteUrl!);
 
-                // 1. Проверка экстремистских материалов
-              //  ExtremistCheckResult = await _extremistChecker.CheckContentAsync(htmlContent, SiteUrl!);
+                // 1. Проверка экстремистских материалов (РАСКОММЕНТИРОВАНО)
+                ExtremistCheckResult = await _extremistChecker.CheckContentAsync(htmlContent, SiteUrl!);
 
                 // 2. Проверка нецензурной лексики
                 AnalysisResult = _badWordAnalyzer.AnalyzeContent(htmlContent);
@@ -93,22 +106,22 @@ namespace MonitoringServiceCore.Pages
                 DictionaryInfo = _badWordAnalyzer.GetDictionaryInfo();
                 Users = _dbContext.Users.ToList();
 
-                // Собираем сообщения
                 var messages = new List<string>();
 
-                if (ExtremistCheckResult.HasExtremistMaterials)
+                // Добавляем проверки на null перед использованием
+                if (ExtremistCheckResult != null && ExtremistCheckResult.HasExtremistMaterials)
                 {
                     messages.Add($"Обнаружено {ExtremistCheckResult.FoundMaterials.Count} экстремистских материалов");
                 }
 
-                if (AnalysisResult.HasBadWords)
+                if (AnalysisResult != null && AnalysisResult.HasBadWords)
                 {
                     messages.Add($"Обнаружено {AnalysisResult.TotalBadWordsCount} нецензурных слов");
                 }
 
-                if (GoogleFormsResult.HasGoogleForms)
+                if (GoogleFormsResult != null && GoogleFormsResult.HasGoogleForms)
                 {
-                    messages.Add($"Обнаружено {GoogleFormsResult.FormUrls.Count} Google Form(s)");
+                    messages.Add($"Обнаружено {GoogleFormsResult.FormUrls?.Count ?? 0} Google Form(s)");
                     if (GoogleFormsResult.IsPotentiallyMalicious)
                     {
                         messages.Add("⚠️ Потенциально вредоносные формы!");
@@ -150,22 +163,23 @@ namespace MonitoringServiceCore.Pages
                 messageBuilder.AppendLine($"<h2>Анализ сайта {SiteUrl} завершён</h2>");
                 messageBuilder.AppendLine($"<p><strong>Время проверки:</strong> {DateTime.Now:dd.MM.yyyy HH:mm:ss}</p>");
 
-                if (ExtremistCheckResult?.HasExtremistMaterials == true)
+                // Добавляем проверки на null
+                if (ExtremistCheckResult != null && ExtremistCheckResult.HasExtremistMaterials)
                     messageBuilder.AppendLine($"<p style='color:red'>⚠️ Экстремистские материалы: {ExtremistCheckResult.FoundMaterials.Count}</p>");
 
-                if (AnalysisResult?.HasBadWords == true)
+                if (AnalysisResult != null && AnalysisResult.HasBadWords)
                     messageBuilder.AppendLine($"<p style='color:orange'>⚠️ Нецензурные слова: {AnalysisResult.TotalBadWordsCount}</p>");
 
-                if (GoogleFormsResult?.HasGoogleForms == true)
-                    messageBuilder.AppendLine($"<p style='color:orange'>⚠️ Google Forms: {GoogleFormsResult.FormUrls.Count}</p>");
+                if (GoogleFormsResult != null && GoogleFormsResult.HasGoogleForms)
+                    messageBuilder.AppendLine($"<p style='color:orange'>⚠️ Google Forms: {GoogleFormsResult.FormUrls?.Count ?? 0}</p>");
 
-                if (ConsentResult?.IsCompliant == false)
+                if (ConsentResult != null && !ConsentResult.IsCompliant)
                     messageBuilder.AppendLine($"<p style='color:red'>⚠️ Нет согласия на обработку ПД</p>");
 
-                if (!(ExtremistCheckResult?.HasExtremistMaterials == true ||
-                      AnalysisResult?.HasBadWords == true ||
-                      GoogleFormsResult?.HasGoogleForms == true ||
-                      ConsentResult?.IsCompliant == false))
+                if (!((ExtremistCheckResult?.HasExtremistMaterials == true) ||
+                      (AnalysisResult?.HasBadWords == true) ||
+                      (GoogleFormsResult?.HasGoogleForms == true) ||
+                      (ConsentResult?.IsCompliant == false)))
                 {
                     messageBuilder.AppendLine("<p style='color:green'>✅ Нарушений не обнаружено.</p>");
                 }

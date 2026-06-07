@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using MonitoringServiceCore.Database;
+using MonitoringServiceCore.Database.BadWord;
 using MonitoringServiceCore.Services;
 using System.ComponentModel.DataAnnotations;
 

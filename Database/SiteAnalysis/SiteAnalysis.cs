@@ -9,8 +9,15 @@
         public DateTime AnalyzedDate { get; set; }
         public int CountOfViolations { get; set; } = 0;
         public bool HasGoogleForms { get; set; }
-        public int FormsCount { get; set; }
-        public bool IsMalicious { get; set; }
+        public bool HasBadWords { get; set; }
+        public bool HasExtimistMaterial { get; set; }
+        public bool HasHotPersonalDataPermissons { get; set; }
+        public List<string>? GoogleFormsFound { get; set; }
+        public int OverallScore { get; set; }
+        public bool HasPrivacyPolicy { get; set; }
+        public bool HasConsent { get; set; }
+        public List<string>? ExtremismFound { get; set; }
+        public int TotalBadWordsCount { get; set; }
 
     }
 }

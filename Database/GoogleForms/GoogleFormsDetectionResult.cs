@@ -1,4 +1,6 @@
-﻿namespace MonitoringServiceCore.Database.GoogleForms
+﻿using MonitoringServiceCore.Services;
+
+namespace MonitoringServiceCore.Database.GoogleForms
 {
     public class GoogleFormsDetectionResult
     {
@@ -9,12 +11,10 @@
         public int HtmlLength { get; set; }
         public List<string> FormUrls { get; set; } = new List<string>();
         public List<string> FormTypes { get; set; } = new List<string>();
-        public SurroundingContentAnalysis SurroundingContentAnalysis { get; set; }
         public bool IsPotentiallyMalicious { get; set; }
-        public List<FormDetail> FormDetails { get; set; } = new List<FormDetail>();
-        public SecurityAnalysis SecurityAnalysis { get; set; }
         public string ErrorMessage { get; set; }
-
+        public SecurityAnalysis? SecurityAnalysis { get; set; }
+        public List<FormDetail> FormDetails { get; set; } = new();
         public bool HasErrors => !string.IsNullOrEmpty(ErrorMessage);
 
         public void PrintReport()
@@ -46,39 +46,14 @@
                     }
                 }
 
-                if (FormDetails.Any())
-                {
-                    Console.WriteLine("\nДетали форм:");
-                    foreach (var detail in FormDetails)
-                    {
-                        Console.WriteLine($"  Форма #{detail.Index}:");
-                        Console.WriteLine($"    Action: {detail.Action}");
-                        Console.WriteLine($"    Method: {detail.Method}");
-                        Console.WriteLine($"    Полей ввода: {detail.InputFieldsCount}");
-                        Console.WriteLine($"    Кнопка отправки: {(detail.HasSubmitButton ? "Да" : "Нет")}");
-                    }
-                }
-
                 if (IsPotentiallyMalicious)
                 {
                     Console.WriteLine("\n⚠️ ВНИМАНИЕ: Обнаружены потенциально вредоносные формы!");
                 }
 
-                if (SurroundingContentAnalysis?.ContainsProfanity == true)
-                {
-                    Console.WriteLine($"\n⚠️ Обнаружена нецензурная лексика в формах: {SurroundingContentAnalysis.ProfanityCount} вхождений");
-                }
             }
 
-            if (SecurityAnalysis != null)
-            {
-                Console.WriteLine($"\n=== АНАЛИЗ БЕЗОПАСНОСТИ ===");
-                Console.WriteLine($"Уровень безопасности: {SecurityAnalysis.SecurityLevel}");
-                Console.WriteLine($"HTTPS: {(SecurityAnalysis.HasHttps ? "Да" : "Нет")}");
-                Console.WriteLine($"Content Security Policy: {(SecurityAnalysis.HasCSP ? "Да" : "Нет")}");
-                Console.WriteLine($"Смешанный контент: {(SecurityAnalysis.HasMixedContent ? "Да" : "Нет")}");
-                Console.WriteLine($"Внешних скриптов: {SecurityAnalysis.ExternalScriptsCount}");
-            }
+           
         }
     }
 }

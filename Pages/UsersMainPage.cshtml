@@ -97,42 +97,164 @@
                 box-shadow: 0 7px 14px rgba(102, 126, 234, 0.3);
             }
 
-        .feature-list {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-            gap: 20px;
+        /* Стили для списка проверок */
+        .checks-list {
             margin-top: 30px;
         }
 
-        .feature-item {
+        .check-item {
             background: white;
             border-radius: 16px;
-            padding: 20px;
-            text-align: center;
+            margin-bottom: 15px;
+            cursor: pointer;
             transition: all 0.3s ease;
             box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
         }
 
-            .feature-item:hover {
-                transform: translateY(-5px);
+            .check-item:hover {
+                transform: translateX(5px);
                 box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
             }
 
-        .feature-icon {
-            font-size: 2.5rem;
+        .check-header {
+            padding: 20px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            background: white;
+            transition: background 0.3s ease;
+        }
+
+            .check-header:hover {
+                background: #f8f9fa;
+            }
+
+        .check-icon {
+            font-size: 2rem;
+            min-width: 60px;
+            text-align: center;
+        }
+
+        .check-info {
+            flex: 1;
+        }
+
+            .check-info h4 {
+                margin: 0 0 5px 0;
+                font-size: 1.2rem;
+                color: #2c3e50;
+            }
+
+            .check-info p {
+                margin: 0;
+                color: #6c757d;
+                font-size: 0.9rem;
+            }
+
+        .check-status {
+            min-width: 140px;
+            text-align: right;
+        }
+
+        .status-badge {
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            display: inline-block;
+        }
+
+        .status-success {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .status-danger {
+            background: #f8d7da;
+            color: #721c24;
+        }
+
+        .status-warning {
+            background: #fff3cd;
+            color: #856404;
+        }
+
+        .status-info {
+            background: #d1ecf1;
+            color: #0c5460;
+        }
+
+        .status-pending {
+            background: #e2e3e5;
+            color: #383d41;
+        }
+
+        .check-arrow {
+            color: #667eea;
+            font-size: 1.2rem;
+            transition: transform 0.3s ease;
+            margin-left: 10px;
+        }
+
+        .check-item.active .check-arrow {
+            transform: rotate(90deg);
+        }
+
+        .check-details {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.5s ease-out;
+            background: #f8f9fa;
+            border-top: 1px solid #e0e0e0;
+        }
+
+        .check-item.active .check-details {
+            max-height: 600px;
+            transition: max-height 0.5s ease-in;
+        }
+
+        .check-details-content {
+            padding: 20px;
+        }
+
+        .detail-section {
             margin-bottom: 15px;
         }
 
-        .feature-item h4 {
-            font-size: 1.2rem;
-            margin-bottom: 10px;
-            color: #2c3e50;
+            .detail-section strong {
+                color: #667eea;
+                display: block;
+                margin-bottom: 8px;
+            }
+
+        .badge-risk {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 500;
         }
 
-        .feature-item p {
-            font-size: 0.9rem;
-            color: #6c757d;
-            margin: 0;
+        .risk-high {
+            background: #fee;
+            color: #e3342f;
+        }
+
+        .risk-medium {
+            background: #fef3c7;
+            color: #f1c40f;
+        }
+
+        .risk-low {
+            background: #e3f2fd;
+            color: #3490dc;
+        }
+
+        .result-value {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: #667eea;
         }
 
         .alert {
@@ -155,45 +277,31 @@
             color: #2c3e50;
         }
 
-        .result-card {
-            margin-top: 30px;
+        .loading-spinner {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(0,0,0,.1);
+            border-radius: 50%;
+            border-top-color: #667eea;
+            animation: spin 1s ease-in-out infinite;
         }
 
-        .badge-custom {
-            padding: 8px 15px;
-            border-radius: 20px;
-            font-weight: 500;
+       
+        to {
+            opacity: 1;
+            transform: translateY(0);
         }
 
-        .bg-gradient-danger {
-            background: linear-gradient(135deg, #e3342f 0%, #cc1f1a 100%);
         }
 
-        .bg-gradient-success {
-            background: linear-gradient(135deg, #38c172 0%, #2d995b 100%);
+        .animate-in {
+            animation: slideIn 0.5s ease forwards;
         }
 
-        .sites-list {
-            margin-top: 30px;
-        }
-
-        .table {
-            border-radius: 16px;
-            overflow: hidden;
-        }
-
-            .table thead th {
-                background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-                color: white;
-                border: none;
-                padding: 15px;
-            }
-
-        .stat-card {
-            background: #f8f9fa;
-            border-radius: 12px;
-            padding: 15px;
-            margin-bottom: 15px;
+        .violation-count {
+            font-size: 1.1rem;
+            font-weight: bold;
         }
     </style>
 </head>
@@ -240,7 +348,7 @@
                 }
 
                 <!-- Форма ввода URL -->
-                <form method="post" asp-page-handler="Analyze">
+                <form method="post" asp-page-handler="Analyze" id="analyzeForm">
                     <div class="mb-3">
                         <label for="SiteUrl" class="form-label fw-bold">
                             <i class="fas fa-link"></i> URL сайта для проверки:
@@ -265,144 +373,467 @@
             </div>
         </div>
 
-        <!-- Что проверяет сервис -->
-        <div class="feature-list">
-            <div class="feature-item">
-                <div class="feature-icon">
-                    <i class="fas fa-ban" style="color: #e3342f;"></i>
-                </div>
-                <h4>Нецензурная лексика</h4>
-                <p>Проверка на наличие матерных слов и ненормативной лексики</p>
-            </div>
-            <div class="feature-item">
-                <div class="feature-icon">
-                    <i class="fab fa-google" style="color: #ea4335;"></i>
-                </div>
-                <h4>Google Forms</h4>
-                <p>Обнаружение форм Google и проверка на фишинговые формы</p>
-            </div>
-            <div class="feature-item">
-                <div class="feature-icon">
-                    <i class="fas fa-gavel" style="color: #f1c40f;"></i>
-                </div>
-                <h4>Экстремистские материалы</h4>
-                <p>Проверка по федеральному списку экстремистских материалов</p>
-            </div>
-            <div class="feature-item">
-                <div class="feature-icon">
-                    <i class="fas fa-user-shield" style="color: #3490dc;"></i>
-                </div>
-                <h4>Персональные данные</h4>
-                <p>Проверка наличия согласия на обработку ПД и политики конфиденциальности</p>
-            </div>
-            <div class="feature-item">
-                <div class="feature-icon">
-                    <i class="fas fa-chart-line" style="color: #764ba2;"></i>
-                </div>
-                <h4>Полный отчет</h4>
-                <p>Детальная статистика и контекст найденных нарушений</p>
-            </div>
-            <div class="feature-item">
-                <div class="feature-icon">
-                    <i class="fas fa-clock" style="color: #38c172;"></i>
-                </div>
-                <h4>Быстрая проверка</h4>
-                <p>Мгновенный анализ содержимого сайта</p>
-            </div>
-        </div>
-
-        <!-- Результаты анализа -->
-        @if (Model.HasAnalysis)
-        {
-            <div class="card result-card">
+        <!-- Список всех проверок с результатами -->
+        <div class="checks-list">
+            <div class="card">
                 <div class="card-header">
-                    <i class="fas fa-chart-bar"></i> Результаты анализа
+                    <i class="fas fa-clipboard-list"></i> Результаты проверок
                 </div>
                 <div class="card-body">
-                    <div class="row">
-                        <div class="col-md-6">
-                            <div class="stat-card">
-                                <h5><i class="fas fa-chart-simple"></i> Статистика проверки:</h5>
-                                <ul class="list-group mt-3">
-                                    <li class="list-group-item d-flex justify-content-between align-items-center">
-                                        Проверенный URL
-                                        <span class="badge bg-secondary rounded-pill">@Model.SiteUrl</span>
-                                    </li>
-                                    <li class="list-group-item d-flex justify-content-between align-items-center">
-                                        Статус проверки
-                                        <span class="badge @(Model.AnalysisResult!.HasBadWords ? "bg-danger" : "bg-success") rounded-pill">
-                                            @(Model.AnalysisResult.HasBadWords ? "Нарушения найдены" : "Безопасно")
+                    <p class="text-muted mb-4">
+                        <i class="fas fa-info-circle"></i> Нажмите на любую проверку, чтобы увидеть подробное описание и результаты
+                    </p>
+
+                    <!-- Проверка 1: Нецензурная лексика -->
+                    <div class="check-item" data-check="badwords">
+                        <div class="check-header">
+                            <div class="check-icon">
+                                <i class="fas fa-ban" style="color: #e3342f;"></i>
+                            </div>
+                            <div class="check-info">
+                                <h4>Нецензурная лексика</h4>
+                                <p>Проверка на наличие матерных слов и ненормативной лексики</p>
+                            </div>
+                            <div class="check-status">
+                                @if (Model.HasAnalysis)
+                                {
+                                    if (Model.AnalysisResult!.HasBadWords)
+                                    {
+                                        <span class="status-badge status-danger">
+                                            <i class="fas fa-exclamation-triangle"></i> Нарушений: @Model.AnalysisResult.TotalBadWordsCount
                                         </span>
-                                    </li>
-                                    <li class="list-group-item d-flex justify-content-between align-items-center">
-                                        Найдено нецензурных слов
-                                        <span class="badge @(Model.AnalysisResult.HasBadWords ? "bg-danger" : "bg-success") rounded-pill">
-                                            @Model.AnalysisResult.TotalBadWordsCount
+                                    }
+                                    else
+                                    {
+                                        <span class="status-badge status-success">
+                                            <i class="fas fa-check-circle"></i> Безопасно
                                         </span>
-                                    </li>
-                                    <li class="list-group-item d-flex justify-content-between align-items-center">
-                                        Уникальных нецензурных слов
-                                        <span class="badge bg-warning rounded-pill">@Model.AnalysisResult.BadWordsFound.Count</span>
-                                    </li>
-                                </ul>
+                                    }
+                                }
+                                else
+                                {
+                                    <span class="status-badge status-pending">
+                                        <i class="fas fa-clock"></i> Ожидает проверки
+                                    </span>
+                                }
+                            </div>
+                            <div class="check-arrow">
+                                <i class="fas fa-chevron-right"></i>
                             </div>
                         </div>
-                        <div class="col-md-6">
-                            @if (Model.AnalysisResult.HasBadWords)
-                            {
-                                <div class="alert alert-danger">
-                                    <i class="fas fa-exclamation-triangle fa-2x mb-2"></i>
-                                    <h5>ВНИМАНИЕ!</h5>
-                                    <p>На сайте обнаружена нецензурная лексика!</p>
+                        <div class="check-details">
+                            <div class="check-details-content">
+                                <div class="detail-section">
+                                    <strong><i class="fas fa-tasks"></i> Что проверяется:</strong>
+                                    <p>Система сканирует весь текстовый контент сайта на наличие нецензурной лексики, включая матерные слова, оскорбления и ненормативную лексику на русском языке.</p>
                                 </div>
-                                <div class="mt-3">
-                                    <strong><i class="fas fa-list"></i> Найденные слова и частота:</strong>
-                                    <div class="d-flex flex-wrap gap-2 mt-2">
-                                        @foreach (var word in Model.AnalysisResult.BadWordsFound.Take(15))
+
+                                @if (Model.HasAnalysis)
+                                {
+                                    <div class="detail-section">
+                                        <strong><i class="fas fa-chart-line"></i> Результаты проверки:</strong>
+                                        @if (Model.AnalysisResult!.HasBadWords)
                                         {
-                                            <span class="badge bg-danger">
-                                                @word.Key <span class="badge bg-light text-dark ms-1">@word.Value</span>
-                                            </span>
+                                            <div class="alert alert-danger mt-2">
+                                                <i class="fas fa-exclamation-triangle"></i> <strong>Обнаружены нарушения!</strong>
+                                                <ul class="mt-2 mb-0">
+                                                    <li>Всего нецензурных слов: <strong>@Model.AnalysisResult.TotalBadWordsCount</strong></li>
+                                                    <li>Уникальных слов: <strong>@Model.AnalysisResult.BadWordsFound?.Count ?? 0</strong></li>
+                                                </ul>
+                                                @if (Model.AnalysisResult.BadWordsFound != null && Model.AnalysisResult.BadWordsFound.Any())
+                                                {
+                                                    <div class="mt-2">
+                                                        <strong>Найденные слова:</strong>
+                                                        <div class="d-flex flex-wrap gap-2 mt-1">
+                                                            @foreach (var word in Model.AnalysisResult.BadWordsFound.Take(10))
+                                                            {
+                                                                <span class="badge bg-danger">
+                                                                    @word.Key (@word.Value)
+                                                                </span>
+                                                            }
+                                                        </div>
+                                                    </div>
+                                                }
+                                            </div>
                                         }
-                                        @if (Model.AnalysisResult.BadWordsFound.Count > 15)
+                                        else
                                         {
-                                            <span class="badge bg-secondary">
-                                                +@(Model.AnalysisResult.BadWordsFound.Count - 15) еще...
-                                            </span>
+                                            <div class="alert alert-success mt-2">
+                                                <i class="fas fa-check-circle"></i> Нецензурная лексика не обнаружена. Сайт соответствует нормам.
+                                            </div>
                                         }
                                     </div>
+                                }
+
+                                <div class="detail-section">
+                                    <strong><i class="fas fa-exclamation-triangle"></i> Уровень риска:</strong>
+                                    <span class="badge-risk risk-high">Высокий</span>
                                 </div>
-                            }
-                            else
-                            {
-                                <div class="alert alert-success text-center">
-                                    <i class="fas fa-check-circle fa-3x mb-2"></i>
-                                    <h5>Хорошие новости!</h5>
-                                    <p class="mb-0">Нецензурная лексика не обнаружена. Сайт соответствует нормам.</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Проверка 2: Google Forms -->
+                    <div class="check-item" data-check="googleforms">
+                        <div class="check-header">
+                            <div class="check-icon">
+                                <i class="fab fa-google" style="color: #ea4335;"></i>
+                            </div>
+                            <div class="check-info">
+                                <h4>Google Forms</h4>
+                                <p>Обнаружение форм Google и проверка на фишинговые формы</p>
+                            </div>
+                            <div class="check-status">
+                                @if (Model.HasAnalysis)
+                                {
+                                    if (Model.AnalysisResult!.HasGoogleForms)
+                                    {
+                                        <span class="status-badge status-warning">
+                                            <i class="fas fa-exclamation-triangle"></i> Найдено форм: @(Model.AnalysisResult.GoogleFormsFound?.Count ?? 0)
+                                        </span>
+                                    }
+                                    else
+                                    {
+                                        <span class="status-badge status-success">
+                                            <i class="fas fa-check-circle"></i> Не найдены
+                                        </span>
+                                    }
+                                }
+                                else
+                                {
+                                    <span class="status-badge status-pending">
+                                        <i class="fas fa-clock"></i> Ожидает проверки
+                                    </span>
+                                }
+                            </div>
+                            <div class="check-arrow">
+                                <i class="fas fa-chevron-right"></i>
+                            </div>
+                        </div>
+                        <div class="check-details">
+                            <div class="check-details-content">
+                                <div class="detail-section">
+                                    <strong><i class="fas fa-tasks"></i> Что проверяется:</strong>
+                                    <p>Анализируется наличие на сайте Google Forms, которые могут использоваться для сбора персональных данных, а также проверка на фишинговые формы.</p>
                                 </div>
-                            }
+
+                                @if (Model.HasAnalysis)
+                                {
+                                    <div class="detail-section">
+                                        <strong><i class="fas fa-chart-line"></i> Результаты проверки:</strong>
+                                        @if (Model.AnalysisResult!.HasGoogleForms && Model.AnalysisResult.GoogleFormsFound != null && Model.AnalysisResult.GoogleFormsFound.Any())
+                                        {
+                                            <div class="alert alert-warning mt-2">
+                                                <i class="fas fa-exclamation-triangle"></i> <strong>Обнаружены Google Forms!</strong>
+                                                <ul class="mt-2 mb-0">
+                                                    @foreach (var form in Model.AnalysisResult.GoogleFormsFound.Take(5))
+                                                    {
+                                                        <li>Форма: @form</li>
+                                                    }
+                                                </ul>
+                                                <p class="mt-2 mb-0 small">Рекомендуется проверить легитимность этих форм.</p>
+                                            </div>
+                                        }
+                                        else
+                                        {
+                                            <div class="alert alert-success mt-2">
+                                                <i class="fas fa-check-circle"></i> Google Forms не обнаружены.
+                                            </div>
+                                        }
+                                    </div>
+                                }
+
+                                <div class="detail-section">
+                                    <strong><i class="fas fa-exclamation-triangle"></i> Уровень риска:</strong>
+                                    <span class="badge-risk risk-medium">Средний</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Проверка 3: Экстремистские материалы -->
+                    <div class="check-item" data-check="extremism">
+                        <div class="check-header">
+                            <div class="check-icon">
+                                <i class="fas fa-gavel" style="color: #f1c40f;"></i>
+                            </div>
+                            <div class="check-info">
+                                <h4>Экстремистские материалы</h4>
+                                <p>Проверка по федеральному списку экстремистских материалов</p>
+                            </div>
+                            <div class="check-status">
+                                @if (Model.HasAnalysis)
+                                {
+                                    if (Model.AnalysisResult!.HasExtimistMaterial)
+                                    {
+                                        <span class="status-badge status-danger">
+                                            <i class="fas fa-exclamation-triangle"></i> Найдено: @(Model.AnalysisResult.ExtremismFound?.Count ?? 0)
+                                        </span>
+                                    }
+                                    else
+                                    {
+                                        <span class="status-badge status-success">
+                                            <i class="fas fa-check-circle"></i> Не найдены
+                                        </span>
+                                    }
+                                }
+                                else
+                                {
+                                    <span class="status-badge status-pending">
+                                        <i class="fas fa-clock"></i> Ожидает проверки
+                                    </span>
+                                }
+                            </div>
+                            <div class="check-arrow">
+                                <i class="fas fa-chevron-right"></i>
+                            </div>
+                        </div>
+                        <div class="check-details">
+                            <div class="check-details-content">
+                                <div class="detail-section">
+                                    <strong><i class="fas fa-tasks"></i> Что проверяется:</strong>
+                                    <p>Сканирование контента на наличие материалов, включенных в федеральный список экстремистских материалов.</p>
+                                </div>
+
+                                @if (Model.HasAnalysis)
+                                {
+                                    <div class="detail-section">
+                                        <strong><i class="fas fa-chart-line"></i> Результаты проверки:</strong>
+                                        @if (Model.AnalysisResult!.HasExtimistMaterial && Model.AnalysisResult.ExtremismFound != null && Model.AnalysisResult.ExtremismFound.Any())
+                                        {
+                                            <div class="alert alert-danger mt-2">
+                                                <i class="fas fa-exclamation-triangle"></i> <strong>Обнаружены экстремистские материалы!</strong>
+                                                <ul class="mt-2 mb-0">
+                                                    @foreach (var material in Model.AnalysisResult.ExtremismFound.Take(5))
+                                                    {
+                                                        <li>@material</li>
+                                                    }
+                                                </ul>
+                                                <p class="mt-2 mb-0 small text-danger"><strong>ВНИМАНИЕ:</strong> Это может повлечь юридическую ответственность!</p>
+                                            </div>
+                                        }
+                                        else
+                                        {
+                                            <div class="alert alert-success mt-2">
+                                                <i class="fas fa-check-circle"></i> Экстремистские материалы не обнаружены.
+                                            </div>
+                                        }
+                                    </div>
+                                }
+
+                                <div class="detail-section">
+                                    <strong><i class="fas fa-exclamation-triangle"></i> Уровень риска:</strong>
+                                    <span class="badge-risk risk-high">Критический</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Проверка 4: Персональные данные -->
+                    <div class="check-item" data-check="personaldata">
+                        <div class="check-header">
+                            <div class="check-icon">
+                                <i class="fas fa-user-shield" style="color: #3490dc;"></i>
+                            </div>
+                            <div class="check-info">
+                                <h4>Персональные данные</h4>
+                                <p>Проверка наличия согласия на обработку ПД и политики конфиденциальности</p>
+                            </div>
+                            <div class="check-status">
+                                @if (Model.HasAnalysis)
+                                {
+                                    if (!Model.AnalysisResult!.HasPrivacyPolicy)
+                                    {
+                                        <span class="status-badge status-warning">
+                                            <i class="fas fa-exclamation-triangle"></i> Нет политики
+                                        </span>
+                                    }
+                                    else if (!Model.AnalysisResult.HasConsent)
+                                    {
+                                        <span class="status-badge status-warning">
+                                            <i class="fas fa-exclamation-triangle"></i> Нет согласия
+                                        </span>
+                                    }
+                                    else
+                                    {
+                                        <span class="status-badge status-success">
+                                            <i class="fas fa-check-circle"></i> Соответствует
+                                        </span>
+                                    }
+                                }
+                                else
+                                {
+                                    <span class="status-badge status-pending">
+                                        <i class="fas fa-clock"></i> Ожидает проверки
+                                    </span>
+                                }
+                            </div>
+                            <div class="check-arrow">
+                                <i class="fas fa-chevron-right"></i>
+                            </div>
+                        </div>
+                        <div class="check-details">
+                            <div class="check-details-content">
+                                <div class="detail-section">
+                                    <strong><i class="fas fa-tasks"></i> Что проверяется:</strong>
+                                    <p>Анализируется наличие политики конфиденциальности и согласия на обработку персональных данных.</p>
+                                </div>
+
+                                @if (Model.HasAnalysis)
+                                {
+                                    <div class="detail-section">
+                                        <strong><i class="fas fa-chart-line"></i> Результаты проверки:</strong>
+                                        <div class="alert @(Model.AnalysisResult!.HasPrivacyPolicy && Model.AnalysisResult.HasConsent ? "alert-success" : "alert-warning") mt-2">
+                                            <ul class="mb-0">
+                                                <li>
+                                                    <i class="fas @(Model.AnalysisResult.HasPrivacyPolicy ? "fa-check-circle" : "fa-times-circle")"></i>
+                                                    Политика конфиденциальности: @(Model.AnalysisResult.HasPrivacyPolicy ? "Присутствует" : "Отсутствует")
+                                                </li>
+                                                <li>
+                                                    <i class="fas @(Model.AnalysisResult.HasConsent ? "fa-check-circle" : "fa-times-circle")"></i>
+                                                    Согласие на обработку ПД: @(Model.AnalysisResult.HasConsent ? "Присутствует" : "Отсутствует")
+                                                </li>
+                                            </ul>
+                                        </div>
+                                    </div>
+                                }
+
+                                <div class="detail-section">
+                                    <strong><i class="fas fa-exclamation-triangle"></i> Уровень риска:</strong>
+                                    <span class="badge-risk risk-high">Высокий</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Проверка 5: Общая оценка -->
+                    <div class="check-item" data-check="fullreport">
+                        <div class="check-header">
+                            <div class="check-icon">
+                                <i class="fas fa-chart-line" style="color: #764ba2;"></i>
+                            </div>
+                            <div class="check-info">
+                                <h4>Общая оценка безопасности</h4>
+                                <p>Детальная статистика и итоговая оценка сайта</p>
+                            </div>
+                            <div class="check-status">
+                                @if (Model.HasAnalysis)
+                                {
+                                    <span class="status-badge @(Model.AnalysisResult!.OverallScore >= 70 ? "status-success" : (Model.AnalysisResult.OverallScore >= 40 ? "status-warning" : "status-danger"))">
+                                        <i class="fas fa-chart-simple"></i> @Model.AnalysisResult.OverallScore/100
+                                    </span>
+                                }
+                                else
+                                {
+                                    <span class="status-badge status-pending">
+                                        <i class="fas fa-clock"></i> Ожидает проверки
+                                    </span>
+                                }
+                            </div>
+                            <div class="check-arrow">
+                                <i class="fas fa-chevron-right"></i>
+                            </div>
+                        </div>
+                        <div class="check-details">
+                            <div class="check-details-content">
+                                <div class="detail-section">
+                                    <strong><i class="fas fa-tasks"></i> Общая оценка:</strong>
+                                    <p>Комплексная оценка безопасности сайта на основе всех проведенных проверок.</p>
+                                </div>
+
+                                @if (Model.HasAnalysis)
+                                {
+                                    <div class="detail-section">
+                                        <strong><i class="fas fa-chart-line"></i> Итоговые результаты:</strong>
+                                        <div class="stat-card mt-2">
+                                            <div class="text-center">
+                                                <div class="result-value">@Model.AnalysisResult!.OverallScore / 100</div>
+                                                <div class="progress mt-2" style="height: 10px;">
+                                                    <div class="progress-bar @(Model.AnalysisResult.OverallScore >= 70 ? "bg-success" : (Model.AnalysisResult.OverallScore >= 40 ? "bg-warning" : "bg-danger"))"
+                                                         role="progressbar"
+                                                         style="width: @Model.AnalysisResult.OverallScore%"
+                                                         aria-valuenow="@Model.AnalysisResult.OverallScore"
+                                                         aria-valuemin="0"
+                                                         aria-valuemax="100">
+                                                    </div>
+                                                </div>
+                                                <p class="mt-2">
+                                                    @if (Model.AnalysisResult.OverallScore >= 70)
+                                                    {
+                                                        <span class="text-success"><i class="fas fa-check-circle"></i> Сайт безопасен</span>
+                                                    }
+                                                    else if (Model.AnalysisResult.OverallScore >= 40)
+                                                    {
+                                                        <span class="text-warning"><i class="fas fa-exclamation-triangle"></i> Требуется внимание</span>
+                                                    }
+                                                    else
+                                                    {
+                                                        <span class="text-danger"><i class="fas fa-times-circle"></i> Высокий риск!</span>
+                                                    }
+                                                </p>
+                                                <hr />
+                                                <div class="row">
+                                                    <div class="col-6">
+                                                        <small>Всего нарушений:</small>
+                                                        <br />
+                                                        <strong class="violation-count">@Model.AnalysisResult.CountOfViolations</strong>
+                                                    </div>
+                                                    <div class="col-6">
+                                                        <small>Дата проверки:</small>
+                                                        <br />
+                                                        <strong>@Model.AnalysisResult.AnalyzedDate.ToString("dd.MM.yyyy HH:mm")</strong>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                }
+                            </div>
                         </div>
                     </div>
                 </div>
             </div>
-        }
-      
+        </div>
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script>
-        // Анимация и блокировка кнопки при отправке
-        document.querySelector('form')?.addEventListener('submit', function(e) {
-            const btn = document.getElementById('analyzeBtn');
-            if (btn) {
-                btn.disabled = true;
-                btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Анализ...';
-            }
+        // Функционал раскрытия/скрытия проверок
+        document.querySelectorAll('.check-item').forEach(item => {
+            const header = item.querySelector('.check-header');
+
+            header.addEventListener('click', (e) => {
+                // Не закрываем при клике на статус
+                if (e.target.closest('.check-status')) return;
+
+                // Закрываем все другие открытые проверки
+                document.querySelectorAll('.check-item').forEach(otherItem => {
+                    if (otherItem !== item && otherItem.classList.contains('active')) {
+                        otherItem.classList.remove('active');
+                    }
+                });
+
+                // Переключаем текущую проверку
+                item.classList.toggle('active');
+            });
         });
 
-        // Плавное появление элементов
+        // Анимация и блокировка кнопки при отправке
+        const form = document.getElementById('analyzeForm');
+        if (form) {
+            form.addEventListener('submit', function(e) {
+                const btn = document.getElementById('analyzeBtn');
+                if (btn) {
+                    btn.disabled = true;
+                    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Анализ...';
+                }
+            });
+        }
+
+        // Если есть результаты, автоматически раскрываем проверки с нарушениями
         document.addEventListener('DOMContentLoaded', function() {
-            const elements = document.querySelectorAll('.card, .feature-item');
+            // Плавное появление элементов
+            const elements = document.querySelectorAll('.card, .check-item');
             elements.forEach((el, index) => {
                 el.style.opacity = '0';
                 el.style.transform = 'translateY(20px)';
@@ -412,6 +843,39 @@
                     el.style.transform = 'translateY(0)';
                 }, index * 100);
             });
+
+            // Автоматически раскрываем проверки с нарушениями
+            @if (Model.HasAnalysis)
+            {
+                    if (Model.AnalysisResult!.HasBadWords)
+                    {
+                            <text>
+                            const badWordsCheck = document.querySelector('[data-check="badwords"]');
+                            if (badWordsCheck) badWordsCheck.classList.add('active');
+                            </text>
+                    }
+                    if (Model.AnalysisResult!.HasGoogleForms)
+                    {
+                            <text>
+                            const googleFormsCheck = document.querySelector('[data-check="googleforms"]');
+                            if (googleFormsCheck) googleFormsCheck.classList.add('active');
+                            </text>
+                    }
+                    if (Model.AnalysisResult!.HasExtimistMaterial)
+                    {
+                            <text>
+                            const extremismCheck = document.querySelector('[data-check="extremism"]');
+                            if (extremismCheck) extremismCheck.classList.add('active');
+                            </text>
+                    }
+                    if (!Model.AnalysisResult!.HasPrivacyPolicy || !Model.AnalysisResult!.HasConsent)
+                    {
+                            <text>
+                            const personalDataCheck = document.querySelector('[data-check="personaldata"]');
+                            if (personalDataCheck) personalDataCheck.classList.add('active');
+                            </text>
+                    }
+            }
         });
     </script>
 </body>

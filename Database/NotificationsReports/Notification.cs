@@ -1,5 +1,4 @@
-﻿using MonitoringService.Database.MonitoringTasks;
-using MonitoringService.Database.ViolationsRules;
+﻿using MonitoringService.Database.ViolationsRules;
 using MonitoringServiceCore.Database.Roles;
 
 namespace MonitoringService.Database.NotificationsReports
@@ -20,6 +19,5 @@ namespace MonitoringService.Database.NotificationsReports
 
         public User? User { get; set; }
         public DetectedViolation? Violation { get; set; }
-        public MonitoringTask? Task { get; set; }
     }
 }

@@ -1,16 +1,17 @@
-﻿using MonitoringServiceCore.Database.dbContext;
+﻿using MonitoringServiceCore.Database;
+using MonitoringServiceCore.Database.dbContext;
+using MonitoringServiceCore.Database.GoogleForms;
 using MonitoringServiceCore.Database.SiteAnalysisNamespace;
 using System.Text.RegularExpressions;
-using MonitoringServiceCore.Database.GoogleForms;
 
 namespace MonitoringServiceCore.Services
 {
     public class GoogleFormsDetector
     {
         private readonly SiteDataDownloader _siteDataDownloader;
-        private readonly BadWordAnalyzer _badWordAnalyzer;
         private readonly MonitoringDbContext _dbContext;
 
+        // ИСПРАВЛЕННЫЕ регулярные выражения - более точные и надежные
         private readonly List<Regex> _googleFormsPatterns = new List<Regex>
         {
             new Regex(@"https?://(?:docs\.google\.com/forms/d/e/|forms\.gle/)[a-zA-Z0-9_-]+", RegexOptions.IgnoreCase),
@@ -22,32 +23,24 @@ namespace MonitoringServiceCore.Services
             new Regex(@"google-form-embed", RegexOptions.IgnoreCase)
         };
 
+        // Только уникальные и точные индикаторы
         private readonly List<string> _googleFormsIndicators = new List<string>
         {
-            "google forms",
-            "forms.google",
-            "docs.google.com/forms",
-            "forms.gle",
-            "google-form",
-            "gform",
-            "entry.",
-            "formResponse",
-            "viewform"
+            "/forms/d/e/",           // Уникальный паттерн Google Forms
+            "viewform",              // Ключевое слово для просмотра формы
+            "formResponse",          // Конечная точка отправки
+            "data-forms-embed",      // Специфичный атрибут Google Forms
+            "google-form-embed"      // Дополнительный атрибут
         };
 
         public GoogleFormsDetector(
             SiteDataDownloader siteDataDownloader,
-            BadWordAnalyzer badWordAnalyzer,
             MonitoringDbContext dbContext)
         {
             _siteDataDownloader = siteDataDownloader ?? throw new ArgumentNullException(nameof(siteDataDownloader));
-            _badWordAnalyzer = badWordAnalyzer ?? throw new ArgumentNullException(nameof(badWordAnalyzer));
             _dbContext = dbContext ?? throw new ArgumentNullException(nameof(dbContext));
         }
 
-        /// <summary>
-        /// Основной метод для проверки наличия Google Forms на сайте
-        /// </summary>
         public async Task<GoogleFormsDetectionResult> DetectGoogleFormsAsync(string url)
         {
             if (string.IsNullOrEmpty(url))
@@ -65,21 +58,24 @@ namespace MonitoringServiceCore.Services
                 result.HtmlLoaded = true;
                 result.HtmlLength = htmlContent.Length;
 
-                result.HasGoogleForms = DetectGoogleFormsInHtml(htmlContent);
+                // Проверка наличия Google Forms
+                result.HasGoogleForms = DetectGoogleFormsInHtml(htmlContent, out var detectionMethod);
 
                 if (result.HasGoogleForms)
                 {
-                    result.FormUrls = ExtractGoogleFormUrls(htmlContent);
+                    result.FormUrls = ExtractValidGoogleFormUrls(htmlContent);
                     result.FormTypes = DetermineFormTypes(htmlContent);
-
-                    // ИСПРАВЛЕНО: добавляем await
-                    result.SurroundingContentAnalysis = await AnalyzeSurroundingContentAsync(htmlContent);
-
                     result.IsPotentiallyMalicious = CheckForMaliciousForms(htmlContent);
+                    result.FormDetails = ExtractFormDetails(htmlContent);
+
+                    // Дополнительная проверка: если URL не найдены, возможно ложное срабатывание
+                    if (result.FormUrls.Count == 0 && result.HasGoogleForms)
+                    {
+                        result.HasGoogleForms = false;
+                    }
                 }
 
                 result.SecurityAnalysis = AnalyzePageSecurity(htmlContent);
-
                 await SaveDetectionResultToDatabaseAsync(url, result);
             }
             catch (HttpRequestException ex)
@@ -97,153 +93,225 @@ namespace MonitoringServiceCore.Services
             return result;
         }
 
-        private bool DetectGoogleFormsInHtml(string html)
+        private bool DetectGoogleFormsInHtml(string html, out string detectionMethod)
         {
+            detectionMethod = "none";
+
             if (string.IsNullOrEmpty(html))
                 return false;
 
+            // 1. Проверка по точным URL паттернам
             foreach (var pattern in _googleFormsPatterns)
             {
                 if (pattern.IsMatch(html))
+                {
+                    detectionMethod = "url_pattern";
                     return true;
+                }
             }
 
+            // 2. Проверка на наличие формы в iframe с специфичными атрибутами
+            if (html.Contains("forms.google.com") &&
+                (html.Contains("<iframe") || html.Contains("viewform")))
+            {
+                detectionMethod = "iframe_detection";
+                return true;
+            }
+
+            // 3. Проверка на специфичные Google Forms атрибуты
+            if (html.Contains("data-forms-embed") ||
+                html.Contains("google-form-embed") ||
+                (html.Contains("google.com/forms") && html.Contains("entry.")))
+            {
+                detectionMethod = "attribute_detection";
+                return true;
+            }
+
+            // 4. Проверка индикаторов только в определенном контексте
             string htmlLower = html.ToLower();
             foreach (var indicator in _googleFormsIndicators)
             {
                 if (htmlLower.Contains(indicator))
-                    return true;
+                {
+                    if (IsLikelyActualForm(html, indicator))
+                    {
+                        detectionMethod = "indicator_context";
+                        return true;
+                    }
+                }
             }
 
             return false;
         }
 
-        private List<string> ExtractGoogleFormUrls(string html)
+        private bool IsLikelyActualForm(string html, string indicator)
+        {
+            int indicatorIndex = html.ToLower().IndexOf(indicator);
+            if (indicatorIndex == -1) return false;
+
+            int start = Math.Max(0, indicatorIndex - 500);
+            int end = Math.Min(html.Length, indicatorIndex + 500);
+            string context = html.Substring(start, end - start);
+
+            return context.Contains("<form") ||
+                   context.Contains("<iframe") ||
+                   context.Contains("method=\"post\"") ||
+                   context.Contains("action=\"") ||
+                   context.Contains("entry.");
+        }
+
+        private List<string> ExtractValidGoogleFormUrls(string html)
         {
             var urls = new List<string>();
+            var seenUrls = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
 
             foreach (var pattern in _googleFormsPatterns)
             {
                 var matches = pattern.Matches(html);
                 foreach (Match match in matches)
                 {
-                    string url = match.Value;
-                    if (!urls.Contains(url))
+                    string url = match.Groups.Count > 1 ? match.Groups[1].Value : match.Value;
+
+                    if (!seenUrls.Contains(url) && IsValidGoogleFormUrl(url))
                     {
-                        urls.Add(url);
+                        // Нормализация URL
+                        url = NormalizeGoogleFormUrl(url);
+
+                        if (!seenUrls.Contains(url))
+                        {
+                            urls.Add(url);
+                            seenUrls.Add(url);
+                        }
                     }
                 }
             }
 
-            return urls;
+            return urls.Distinct().ToList();
+        }
+
+        private string NormalizeGoogleFormUrl(string url)
+        {
+            // Добавляем viewform если его нет
+            if (url.Contains("/forms/d/e/") &&
+                !url.Contains("/viewform") &&
+                !url.Contains("/formResponse"))
+            {
+                url = url.TrimEnd('/') + "/viewform";
+            }
+
+            // Удаляем якоря
+            int anchorIndex = url.IndexOf('#');
+            if (anchorIndex > 0)
+                url = url.Substring(0, anchorIndex);
+
+            return url;
+        }
+
+        private bool IsValidGoogleFormUrl(string url)
+        {
+            try
+            {
+                if (string.IsNullOrEmpty(url)) return false;
+
+                var uri = new Uri(url);
+                return uri.Host.Contains("google.com") ||
+                       uri.Host.Contains("forms.gle") ||
+                       uri.Host.Contains("docs.google.com");
+            }
+            catch
+            {
+                return false;
+            }
         }
 
         private List<string> DetermineFormTypes(string html)
         {
             var types = new List<string>();
+            string lowerHtml = html.ToLower();
 
-            if (html.Contains("viewform", StringComparison.OrdinalIgnoreCase))
-                types.Add("Анкета/опрос");
+            if (lowerHtml.Contains("/viewform"))
+                types.Add("Стандартная форма");
 
-            if (html.Contains("formResponse", StringComparison.OrdinalIgnoreCase))
-                types.Add("Форма отправки данных");
+            if (lowerHtml.Contains("/formresponse"))
+                types.Add("Ajax форма");
 
-            if (html.Contains("embedded", StringComparison.OrdinalIgnoreCase))
-                types.Add("Встроенная форма");
+            if (lowerHtml.Contains("embedded=true") ||
+                (lowerHtml.Contains("<iframe") && lowerHtml.Contains("google.com/forms")))
+                types.Add("Встроенная форма (iframe)");
 
-            if (html.Contains("prefill", StringComparison.OrdinalIgnoreCase))
+            if (lowerHtml.Contains("?usp=pp_url") || lowerHtml.Contains("prefill"))
                 types.Add("Форма с предзаполнением");
 
-            if (html.Contains("template", StringComparison.OrdinalIgnoreCase))
-                types.Add("Шаблон формы");
+            if (lowerHtml.Contains("/template/"))
+                types.Add("Шаблон Google Forms");
+
+            if (lowerHtml.Contains("entry.") && lowerHtml.Contains("google.com/forms"))
+                types.Add("Активная форма с полями ввода");
 
             return types.Distinct().ToList();
         }
 
-        // ИСПРАВЛЕНО: добавлен async и возвращается Task
-        private async Task<SurroundingContentAnalysis> AnalyzeSurroundingContentAsync(string html)
-        {
-            var analysis = new SurroundingContentAnalysis();
-
-            var formMatches = Regex.Matches(html, @"<form[^>]*>([\s\S]*?)</form>", RegexOptions.IgnoreCase);
-
-            foreach (Match formMatch in formMatches)
-            {
-                string formContent = formMatch.Groups[1].Value;
-
-                // ИСПРАВЛЕНО: добавлен await и используется синхронный метод AnalyzeContent
-                var badWordsAnalysis = _badWordAnalyzer.AnalyzeContent(formContent);
-
-                if (badWordsAnalysis.HasBadWords)
-                {
-                    analysis.ContainsProfanity = true;
-                    analysis.ProfanityCount += badWordsAnalysis.TotalBadWordsCount;
-                    analysis.ProfanityExamples.AddRange(
-                        badWordsAnalysis.BadWordsFound.Keys.Take(5));
-                }
-
-                if (formContent.Contains("password", StringComparison.OrdinalIgnoreCase) ||
-                    formContent.Contains("credit card", StringComparison.OrdinalIgnoreCase) ||
-                    formContent.Contains("ssn", StringComparison.OrdinalIgnoreCase) ||
-                    formContent.Contains("card number", StringComparison.OrdinalIgnoreCase))
-                {
-                    analysis.ContainsSensitiveFields = true;
-                }
-            }
-
-            return analysis;
-        }
-
         private bool CheckForMaliciousForms(string html)
         {
-            bool hasPhishingIndicators = html.Contains("verify your account", StringComparison.OrdinalIgnoreCase) ||
-                                        html.Contains("confirm your identity", StringComparison.OrdinalIgnoreCase) ||
-                                        html.Contains("update your information", StringComparison.OrdinalIgnoreCase) ||
-                                        html.Contains("unusual activity", StringComparison.OrdinalIgnoreCase) ||
-                                        html.Contains("suspicious activity", StringComparison.OrdinalIgnoreCase);
+            string lowerHtml = html.ToLower();
 
-            bool requestsSensitiveData = html.Contains("password", StringComparison.OrdinalIgnoreCase) &&
-                                        (html.Contains("login", StringComparison.OrdinalIgnoreCase) ||
-                                         html.Contains("sign in", StringComparison.OrdinalIgnoreCase) ||
-                                         html.Contains("verify", StringComparison.OrdinalIgnoreCase));
+            bool hasPhishingIndicators = (lowerHtml.Contains("verify your account") ||
+                                         lowerHtml.Contains("confirm your identity") ||
+                                         lowerHtml.Contains("update your information") ||
+                                         lowerHtml.Contains("unusual activity") ||
+                                         lowerHtml.Contains("suspicious activity") ||
+                                         lowerHtml.Contains("подтвердите") ||
+                                         lowerHtml.Contains("верификация")) &&
+                                         lowerHtml.Contains("google.com/forms");
 
-            bool suspiciousDomain = html.Contains("google.com") &&
-                                   (html.Contains("gmail.com", StringComparison.OrdinalIgnoreCase) ||
-                                    html.Contains("drive.google.com", StringComparison.OrdinalIgnoreCase));
+            bool requestsSensitiveData = (lowerHtml.Contains("password") ||
+                                         lowerHtml.Contains("пароль") ||
+                                         lowerHtml.Contains("credit card") ||
+                                         lowerHtml.Contains("банковская карта") ||
+                                         lowerHtml.Contains("ssn") ||
+                                         lowerHtml.Contains("passport")) &&
+                                         lowerHtml.Contains("entry.");
 
-            // Дополнительные фишинговые индикаторы
-            bool urgentLanguage = html.Contains("immediately", StringComparison.OrdinalIgnoreCase) ||
-                                  html.Contains("urgent", StringComparison.OrdinalIgnoreCase) ||
-                                  html.Contains("as soon as possible", StringComparison.OrdinalIgnoreCase);
+            bool urgentLanguage = (lowerHtml.Contains("immediately") ||
+                                  lowerHtml.Contains("urgent") ||
+                                  lowerHtml.Contains("as soon as possible") ||
+                                  lowerHtml.Contains("срочно") ||
+                                  lowerHtml.Contains("немедленно")) &&
+                                  (lowerHtml.Contains("verify") || lowerHtml.Contains("confirm"));
 
-            return hasPhishingIndicators || requestsSensitiveData || suspiciousDomain || urgentLanguage;
+            return hasPhishingIndicators || requestsSensitiveData || urgentLanguage;
         }
 
         private List<FormDetail> ExtractFormDetails(string html)
         {
             var formDetails = new List<FormDetail>();
-
-            var formMatches = Regex.Matches(html, @"<form[^>]*>([\s\S]*?)</form>", RegexOptions.IgnoreCase);
+            var formMatches = Regex.Matches(html, @"<form[^>]*>([\s\S]*?)</form>", RegexOptions.IgnoreCase | RegexOptions.Compiled);
 
             for (int i = 0; i < formMatches.Count; i++)
             {
                 var match = formMatches[i];
+                string formContent = match.Value;
 
-                string action = Regex.Match(match.Value, @"action=[""']([^""']+)[""']", RegexOptions.IgnoreCase).Groups[1].Value;
-                string method = Regex.Match(match.Value, @"method=[""']([^""']+)[""']", RegexOptions.IgnoreCase).Groups[1].Value;
+                string action = Regex.Match(formContent, @"action=[""']([^""']+)[""']", RegexOptions.IgnoreCase).Groups[1].Value;
+                string method = Regex.Match(formContent, @"method=[""']([^""']+)[""']", RegexOptions.IgnoreCase).Groups[1].Value;
+                string id = Regex.Match(formContent, @"id=[""']([^""']+)[""']", RegexOptions.IgnoreCase).Groups[1].Value;
+                string name = Regex.Match(formContent, @"name=[""']([^""']+)[""']", RegexOptions.IgnoreCase).Groups[1].Value;
 
-                // Проверяем, является ли форма Google Forms
                 bool isGoogleForm = action.Contains("google.com/forms") ||
                                    action.Contains("docs.google.com/forms") ||
-                                   action.Contains("forms.gle");
+                                   action.Contains("forms.gle") ||
+                                   formContent.Contains("google forms", StringComparison.OrdinalIgnoreCase) ||
+                                   formContent.Contains("/forms/d/e/");
 
                 var detail = new FormDetail
                 {
                     Index = i + 1,
+                    Id = id,
+                    Name = name,
                     Action = string.IsNullOrEmpty(action) ? "Не указан" : action,
                     Method = string.IsNullOrEmpty(method) ? "get" : method.ToLower(),
-                    InputFieldsCount = Regex.Matches(match.Value, @"<input", RegexOptions.IgnoreCase).Count,
-                    HasSubmitButton = Regex.IsMatch(match.Value, @"<button[^>]*type=[""']submit[""']|<input[^>]*type=[""']submit[""']", RegexOptions.IgnoreCase),
+                    InputFieldsCount = Regex.Matches(formContent, @"<input", RegexOptions.IgnoreCase).Count,
+                    HasSubmitButton = Regex.IsMatch(formContent, @"<button[^>]*type=[""']submit[""']|<input[^>]*type=[""']submit[""']", RegexOptions.IgnoreCase),
                     IsGoogleForm = isGoogleForm
                 };
 
@@ -255,9 +323,10 @@ namespace MonitoringServiceCore.Services
 
         private SecurityAnalysis AnalyzePageSecurity(string html)
         {
-            var analysis = new SecurityAnalysis();
-
-            analysis.HasHttps = html.Contains("https://");
+            var analysis = new SecurityAnalysis
+            {
+                HasHttps = html.Contains("https://")
+            };
 
             analysis.HasCSP = html.Contains("Content-Security-Policy") ||
                              html.Contains("http-equiv=\"Content-Security-Policy\"");
@@ -281,25 +350,46 @@ namespace MonitoringServiceCore.Services
         {
             try
             {
+                var uri = new Uri(url);
+                var domain = uri.Host;
+
                 var siteAnalysis = new SiteAnalysis
                 {
+                    Id = Guid.NewGuid(),
                     Url = url,
-                    DomainUrl = new Uri(url).Host,
+                    DomainUrl = domain,
                     AnalyzedDate = DateTime.UtcNow,
                     HasGoogleForms = result.HasGoogleForms,
-                    FormsCount = result.FormUrls?.Count ?? 0,
-                    IsMalicious = result.IsPotentiallyMalicious
+                    GoogleFormsFound = result.FormUrls ?? new List<string>(),
+                    CountOfViolations = result.IsPotentiallyMalicious ? 1 : 0,
+                    OverallScore = CalculateOverallScore(result)
                 };
 
                 _dbContext.SiteAnalyses.Add(siteAnalysis);
                 await _dbContext.SaveChangesAsync();
-
-                Console.WriteLine($"Результат проверки для {url} сохранен в БД");
             }
             catch (Exception ex)
             {
                 Console.WriteLine($"Ошибка сохранения в БД: {ex.Message}");
             }
+        }
+
+        private int CalculateOverallScore(GoogleFormsDetectionResult result)
+        {
+            int score = 100;
+
+            if (result.HasGoogleForms)
+                score -= 30;
+
+            if (result.IsPotentiallyMalicious)
+                score -= 40;
+
+            if (result.SecurityAnalysis?.SecurityLevel == "Низкий")
+                score -= 20;
+            else if (result.SecurityAnalysis?.SecurityLevel == "Средний")
+                score -= 10;
+
+            return Math.Max(0, score);
         }
 
         public async Task<List<GoogleFormsDetectionResult>> DetectGoogleFormsBatchAsync(List<string> urls)
@@ -310,8 +400,7 @@ namespace MonitoringServiceCore.Services
             {
                 var result = await DetectGoogleFormsAsync(url);
                 results.Add(result);
-
-                await Task.Delay(100); // Задержка между запросами
+                await Task.Delay(100);
             }
 
             return results;
@@ -335,7 +424,9 @@ namespace MonitoringServiceCore.Services
 
                 stats.TotalPagesChecked = siteAnalyses.Count;
                 stats.PagesWithGoogleForms = siteAnalyses.Count(s => s.HasGoogleForms);
-                stats.TotalFormsFound = siteAnalyses.Sum(s => s.FormsCount);
+                stats.TotalFormsFound = siteAnalyses
+                    .Where(s => s.GoogleFormsFound != null)
+                    .Sum(s => s.GoogleFormsFound?.Count ?? 0);
             }
             catch (Exception ex)
             {
@@ -346,10 +437,22 @@ namespace MonitoringServiceCore.Services
         }
     }
 
-    // Дополнительные классы, если их нет
+    // Класс SurroundingContentAnalysis УДАЛЕН как неиспользуемый
+
+    public class SecurityAnalysis
+    {
+        public bool HasHttps { get; set; }
+        public bool HasCSP { get; set; }
+        public int ExternalScriptsCount { get; set; }
+        public bool HasMixedContent { get; set; }
+        public string SecurityLevel { get; set; } = "Не определен";
+    }
+
     public class FormDetail
     {
         public int Index { get; set; }
+        public string Id { get; set; } = string.Empty;
+        public string Name { get; set; } = string.Empty;
         public string Action { get; set; } = string.Empty;
         public string Method { get; set; } = string.Empty;
         public int InputFieldsCount { get; set; }
