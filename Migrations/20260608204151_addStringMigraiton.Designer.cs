@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using MonitoringServiceCore.Database.dbContext;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
@@ -12,9 +13,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace MonitoringServiceCore.Migrations
 {
     [DbContext(typeof(MonitoringDbContext))]
-    partial class MonitoringDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260608204151_addStringMigraiton")]
+    partial class addStringMigraiton
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -56,7 +59,7 @@ namespace MonitoringServiceCore.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("ExtremistMaterials", (string)null);
+                    b.ToTable("ExtremistMaterials");
                 });
 
             modelBuilder.Entity("MonitoringServiceCore.Database.MonitoringPortalResources.MonitoringResource", b =>
@@ -92,7 +95,7 @@ namespace MonitoringServiceCore.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("Resources", (string)null);
+                    b.ToTable("Resources");
                 });
 
             modelBuilder.Entity("MonitoringServiceCore.Database.Roles.Role", b =>
@@ -114,7 +117,7 @@ namespace MonitoringServiceCore.Migrations
                     b.HasIndex("RoleName")
                         .IsUnique();
 
-                    b.ToTable("Roles", (string)null);
+                    b.ToTable("Roles");
                 });
 
             modelBuilder.Entity("MonitoringServiceCore.Database.Roles.User", b =>
@@ -149,7 +152,7 @@ namespace MonitoringServiceCore.Migrations
 
                     b.HasIndex("RoleId");
 
-                    b.ToTable("Users", (string)null);
+                    b.ToTable("Users");
                 });
 
             modelBuilder.Entity("MonitoringServiceCore.Database.SiteAnalysisNamespace.SiteAnalysis", b =>
@@ -206,7 +209,7 @@ namespace MonitoringServiceCore.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("SiteAnalyses", (string)null);
+                    b.ToTable("SiteAnalyses");
                 });
 
             modelBuilder.Entity("MonitoringServiceCore.Database.Roles.User", b =>

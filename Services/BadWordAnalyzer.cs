@@ -391,23 +391,6 @@ namespace MonitoringServiceCore.Services
             return ContainsBadWord(text) ? 0.8f : 0.1f;
         }
 
-        private int CountWordOccurrences(string text, string word)
-        {
-            int count = 0;
-            int index = 0;
-
-            while ((index = text.IndexOf(word, index, StringComparison.Ordinal)) != -1)
-            {
-                if (IsWholeWord(text, index, word.Length))
-                {
-                    count++;
-                }
-                index += word.Length;
-            }
-
-            return count;
-        }
-
         private bool IsWholeWord(string text, int index, int wordLength)
         {
             bool startOk = index == 0 || !char.IsLetterOrDigit(text[index - 1]);

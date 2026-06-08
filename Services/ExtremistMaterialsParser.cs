@@ -1,210 +1,122 @@
-﻿using HtmlAgilityPack;
-using MonitoringServiceCore.Database.dbContext;
-using MonitoringServiceCore.Database.ExtremistMaterialPackage;
-using System.Globalization;
-using System.Text.RegularExpressions;
-using System.Xml;
+﻿using MonitoringServiceCore.Database.ExtremistMaterialPackage;
 
 namespace MonitoringServiceCore.Services
 {
     public class ExtremistMaterialsParser
     {
-        private readonly IHttpClientFactory _httpClientFactory;
+        private readonly IWebHostEnvironment _environment;
         private readonly ILogger<ExtremistMaterialsParser> _logger;
-        private readonly MonitoringDbContext _dbContext;
+        private readonly string _folderPath;
+        private const string FileName = "exportfsm.docx";
+        private const string SourceUrl = "https://minjust.gov.ru/uploaded/files/exportfsm.docx";
 
-        // Базовый URL для страниц со списком
-        private const string BaseUrl = "https://minjust.gov.ru/ru/extremist-materials/";
-
-        public ExtremistMaterialsParser(
-            IHttpClientFactory httpClientFactory,
-            ILogger<ExtremistMaterialsParser> logger,
-            MonitoringDbContext dbContext)
+        public ExtremistMaterialsParser(IWebHostEnvironment environment, ILogger<ExtremistMaterialsParser> logger)
         {
-            _httpClientFactory = httpClientFactory;
+            _environment = environment;
             _logger = logger;
-            _dbContext = dbContext;
+            _folderPath = Path.Combine(_environment.WebRootPath, "ExtemistMaterial");
         }
 
         /// <summary>
-        /// Запускает полный сбор всех материалов со всех страниц
+        /// Скачивает файл с сайта Минюста и сохраняет в wwwroot
         /// </summary>
-        public async Task<ParseResult> ParseAllPagesAsync(int startPage = 1, int endPage = 55)
+        public async Task<bool> DownloadFileAsync()
         {
-            var result = new ParseResult
-            {
-                StartTime = DateTime.Now,
-                TotalPagesProcessed = 0,
-                TotalMaterialsFound = 0
-            };
-
-            var client = _httpClientFactory.CreateClient();
-            client.DefaultRequestHeaders.Add("User-Agent",
-                "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36");
-
-            for (int page = startPage; page <= endPage; page++)
-            {
-                _logger.LogInformation("Начинается обработка страницы {Page}", page);
-
-                var pageResult = await ParseSinglePageAsync(client, page);
-                result.PagesResults.Add(pageResult);
-                result.TotalMaterialsFound += pageResult.MaterialsCount;
-                result.TotalPagesProcessed++;
-
-                if (pageResult.Materials.Any())
-                {
-                    // Сохраняем материалы в БД
-                    foreach (var material in pageResult.Materials)
-                    {
-                        if (!_dbContext.ExtremistMaterials.Any(m => m.Number == material.Number))
-                        {
-                            _dbContext.ExtremistMaterials.Add(material);
-                        }
-                    }
-                    await _dbContext.SaveChangesAsync();
-                }
-
-                // Задержка между запросами, чтобы не нагружать сервер
-                await Task.Delay(500);
-            }
-
-            result.EndTime = DateTime.Now;
-            result.Duration = result.EndTime - result.StartTime;
-
-            _logger.LogInformation(
-                "Парсинг завершён. Обработано страниц: {Pages}, найдено материалов: {Materials}",
-                result.TotalPagesProcessed, result.TotalMaterialsFound);
-
-            return result;
-        }
-
-        /// <summary>
-        /// Парсит одну страницу и возвращает список материалов
-        /// </summary>
-        private async Task<PageParseResult> ParseSinglePageAsync(HttpClient client, int pageNumber)
-        {
-            var result = new PageParseResult
-            {
-                PageNumber = pageNumber,
-                Materials = new List<ExtremistMaterial>(),
-                Success = false
-            };
-
             try
             {
-                string url = pageNumber == 1
-                    ? BaseUrl
-                    : $"{BaseUrl}?page={pageNumber}";
+                if (!Directory.Exists(_folderPath))
+                    Directory.CreateDirectory(_folderPath);
 
-                var response = await client.GetAsync(url);
-                if (!response.IsSuccessStatusCode)
-                {
-                    _logger.LogWarning("Страница {Page} вернула код {StatusCode}",
-                        pageNumber, response.StatusCode);
-                    result.ErrorMessage = $"HTTP {response.StatusCode}";
-                    return result;
-                }
+                var filePath = Path.Combine(_folderPath, FileName);
 
-                var html = await response.Content.ReadAsStringAsync();
-                var doc = new HtmlDocument();
-                doc.LoadHtml(html);
+                using var httpClient = new HttpClient();
+                httpClient.DefaultRequestHeaders.Add("User-Agent", "Mozilla/5.0");
+                var response = await httpClient.GetAsync(SourceUrl);
+                response.EnsureSuccessStatusCode();
 
-                // Находим таблицу с материалами
-                var table = doc.DocumentNode.SelectSingleNode("//table[contains(@class, 'table-bordered')]");
-                if (table == null)
-                {
-                    _logger.LogWarning("Таблица не найдена на странице {Page}", pageNumber);
-                    result.ErrorMessage = "Таблица не найдена";
-                    return result;
-                }
+                await using var fs = new FileStream(filePath, FileMode.Create);
+                await response.Content.CopyToAsync(fs);
 
-                // Получаем все строки таблицы, пропуская заголовок
-                var rows = table.SelectNodes(".//tr")?.Skip(1).ToList();
-                if (rows == null || !rows.Any())
-                {
-                    result.ErrorMessage = "В таблице нет данных";
-                    return result;
-                }
-
-                foreach (var row in rows)
-                {
-                    var cells = row.SelectNodes(".//td");
-                    if (cells == null || cells.Count < 3) continue;
-
-                    var material = new ExtremistMaterial
-                    {
-                        Id = Guid.NewGuid(),
-                        PageNumber = pageNumber,
-                        CreatedAt = DateTime.UtcNow
-                    };
-
-                    // Номер материала
-                    if (int.TryParse(cells[0].InnerText.Trim(), out int number))
-                    {
-                        material.Number = number;
-                    }
-
-                    // Текст описания материала
-                    material.Description = HtmlEntity.DeEntitize(cells[1].InnerText.Trim());
-                    material.RawText = material.Description;
-
-                    // Дата решения суда (обычно в конце описания или в отдельной ячейке)
-                    material.DecisionDate = ExtractDecisionDate(cells[2]?.InnerText ?? material.Description);
-
-                    result.Materials.Add(material);
-                }
-
-                result.MaterialsCount = result.Materials.Count;
-                result.Success = true;
-                _logger.LogInformation("Страница {Page}: найдено {Count} материалов",
-                    pageNumber, result.MaterialsCount);
+                _logger.LogInformation("Файл успешно загружен: {Path}", filePath);
+                return true;
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Ошибка при парсинге страницы {Page}", pageNumber);
-                result.ErrorMessage = ex.Message;
+                _logger.LogError(ex, "Ошибка при загрузке файла");
+                return false;
             }
-
-            return result;
         }
 
         /// <summary>
-        /// Извлекает дату из текста (формат: дд.мм.гггг)
+        /// Проверяет, существует ли файл и не устарел ли он (старше N часов)
         /// </summary>
-        private DateTime? ExtractDecisionDate(string text)
+        public bool IsFileOutdated(int hours = 24)
         {
-            if (string.IsNullOrEmpty(text)) return null;
+            var filePath = Path.Combine(_folderPath, FileName);
+            if (!File.Exists(filePath)) return true;
+            var lastWrite = File.GetLastWriteTime(filePath);
+            return lastWrite < DateTime.Now.AddHours(-hours);
+        }
 
-            // Ищем дату в формате дд.мм.гггг
-            var match = Regex.Match(text, @"\b(\d{2})\.(\d{2})\.(\d{4})\b");
-            if (match.Success && DateTime.TryParseExact(match.Value, "dd.MM.yyyy",
-                CultureInfo.InvariantCulture, DateTimeStyles.None, out var date))
+        /// <summary>
+        /// Извлекает все записи из DOCX-файла в список объектов ExtremistMaterial
+        /// </summary>
+        public List<ExtremistMaterial> ParseMaterialsFromDocx()
+        {
+            var materials = new List<ExtremistMaterial>();
+            var filePath = Path.Combine(_folderPath, FileName);
+
+            if (!File.Exists(filePath))
             {
-                return date;
+                _logger.LogWarning("Файл не найден: {Path}", filePath);
+                return materials;
             }
 
-            return null;
+            using var document = DocX.Load(filePath);
+            var fullText = document.Text; // Весь текст документа
+
+            // Разделяем текст на строки (каждая запись обычно на новой строке)
+            var lines = fullText.Split(new[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries);
+
+            foreach (var line in lines)
+            {
+                // Ищем строки формата: "номер | описание | дата"
+                var match = System.Text.RegularExpressions.Regex.Match(line, @"(\d+)\s*\|\s*(.+?)\s*\|\s*(\d{2}\.\d{2}\.\d{4})");
+                if (!match.Success) continue;
+
+                int number = int.Parse(match.Groups[1].Value);
+                string description = match.Groups[2].Value.Trim();
+                DateTime? decisionDate = null;
+                if (DateTime.TryParseExact(match.Groups[3].Value, "dd.MM.yyyy", null, System.Globalization.DateTimeStyles.None, out var date))
+                    decisionDate = date;
+
+                // Извлекаем слова в кавычках из описания
+                string quotedText = ExtractQuotedText(description);
+
+                var material = new ExtremistMaterial
+                {
+                    Id = Guid.NewGuid(),
+                    Number = number,
+                    Text = quotedText,
+                    Description = description,
+                    DecisionDate = decisionDate,
+                    RawText = line,
+                    CreatedAt = DateTime.UtcNow
+                };
+                materials.Add(material);
+            }
+
+            _logger.LogInformation("Из DOCX извлечено {Count} материалов", materials.Count);
+            return materials;
         }
-    }
 
-    // Результат парсинга одной страницы
-    public class PageParseResult
-    {
-        public int PageNumber { get; set; }
-        public List<ExtremistMaterial> Materials { get; set; } = new();
-        public int MaterialsCount { get; set; }
-        public bool Success { get; set; }
-        public string? ErrorMessage { get; set; }
-    }
-
-    // Общий результат парсинга
-    public class ParseResult
-    {
-        public DateTime StartTime { get; set; }
-        public DateTime EndTime { get; set; }
-        public TimeSpan Duration { get; set; }
-        public int TotalPagesProcessed { get; set; }
-        public int TotalMaterialsFound { get; set; }
-        public List<PageParseResult> PagesResults { get; set; } = new();
+        private string ExtractQuotedText(string text)
+        {
+            var matches = System.Text.RegularExpressions.Regex.Matches(text, @"[""«]([^""»]+)[""»]");
+            var quoted = new List<string>();
+            foreach (System.Text.RegularExpressions.Match m in matches)
+                quoted.Add(m.Groups[1].Value.Trim());
+            return string.Join(", ", quoted);
+        }
     }
 }

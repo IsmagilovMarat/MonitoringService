@@ -12,7 +12,6 @@ namespace MonitoringServiceCore.Services
         {
             _dbContext = dbContext;
         }
-
         public User? GetUserFromDb(string name, string password)
         {
             var user = _dbContext.Users
@@ -21,8 +20,6 @@ namespace MonitoringServiceCore.Services
 
             return user;
         }
-
-        // НОВЫЙ МЕТОД: Поиск пользователя по email
         public User? GetUserByEmail(string email, string password)
         {
             var user = _dbContext.Users
@@ -31,8 +28,6 @@ namespace MonitoringServiceCore.Services
 
             return user;
         }
-
-        // НОВЫЙ МЕТОД: Поиск пользователя по email (без пароля)
         public User? GetUserByEmailOnly(string email)
         {
             var user = _dbContext.Users
@@ -47,7 +42,6 @@ namespace MonitoringServiceCore.Services
             var role = _dbContext.Roles.FirstOrDefault(r => r.RoleName == roleName);
             if (role == null) return false;
 
-            // Проверка на существующего пользователя
             var existingUser = _dbContext.Users.FirstOrDefault(u => u.Name == username || u.Email == email);
             if (existingUser != null) return false;
 
@@ -57,7 +51,7 @@ namespace MonitoringServiceCore.Services
                 Name = username,
                 SecondName = secondName ?? string.Empty,
                 Email = email,
-                Password = password, // В реальном проекте хешируйте пароль!
+                Password = password,
                 UserRole = role,
                 RoleId = role.Id
             };

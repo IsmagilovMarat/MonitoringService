@@ -28,7 +28,7 @@ internal class Program
         builder.Services.AddScoped<GoogleFormsDetector>();
         builder.Services.AddScoped<PersonalDataConsentService>();
         builder.Services.AddHttpClient();
-        builder.Services.AddHostedService<ExtremistMaterialsUpdateService>();
+        builder.Services.AddHostedService<ExtremistMaterialUpdateService>();
         builder.Services.AddScoped<ExtremistMaterialChecker>();
         builder.Services.AddScoped<JobFactory>();
         builder.Services.AddScoped<DataJob>();
@@ -86,3 +86,4 @@ internal class Program
 }
 //https://www.geeksforgeeks.org/websites-apps/how-to-add-a-link-to-a-google-form/
 //https://ru.wikipedia.org/wiki/Гады
+//https://minjust.gov.ru/ru/extremist-materials/

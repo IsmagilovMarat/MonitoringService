@@ -32,7 +32,6 @@
             margin: 0 auto;
         }
 
-        /* Верхняя панель */
         .top-bar {
             display: flex;
             justify-content: space-between;
@@ -65,11 +64,27 @@
             gap: 8px;
         }
 
-            .btn-back:hover {
-                transform: translateY(-2px);
-                box-shadow: 0 7px 14px rgba(102, 126, 234, 0.3);
-                color: white;
-            }
+        .btn-back:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 7px 14px rgba(102, 126, 234, 0.3);
+            color: white;
+        }
+
+        .btn-check-resource {
+            background: linear-gradient(135deg, #38c172 0%, #2d995b 100%);
+            border: none;
+            border-radius: 8px;
+            padding: 6px 12px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: white;
+            transition: all 0.3s ease;
+        }
+
+        .btn-check-resource:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 10px rgba(56, 193, 114, 0.3);
+        }
 
         .kfu-badge {
             background: rgba(255, 255, 255, 0.2);
@@ -85,9 +100,9 @@
             transition: all 0.3s ease;
         }
 
-            .btn-outline-light:hover {
-                transform: translateY(-2px);
-            }
+        .btn-outline-light:hover {
+            transform: translateY(-2px);
+        }
 
         .header {
             text-align: center;
@@ -95,16 +110,16 @@
             color: white;
         }
 
-            .header h1 {
-                font-size: 2.5rem;
-                font-weight: 700;
-                margin-bottom: 10px;
-            }
+        .header h1 {
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 10px;
+        }
 
-            .header p {
-                font-size: 1.1rem;
-                opacity: 0.9;
-            }
+        .header p {
+            font-size: 1.1rem;
+            opacity: 0.9;
+        }
 
         .card {
             border: none;
@@ -115,9 +130,9 @@
             margin-bottom: 25px;
         }
 
-            .card:hover {
-                transform: translateY(-5px);
-            }
+        .card:hover {
+            transform: translateY(-5px);
+        }
 
         .card-header {
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
@@ -128,7 +143,7 @@
             font-size: 1.2rem;
         }
 
-        .form-control, .form-select {
+        .form-control {
             border: 2px solid #e0e0e0;
             border-radius: 12px;
             padding: 12px 18px;
@@ -136,10 +151,10 @@
             transition: all 0.3s ease;
         }
 
-            .form-control:focus, .form-select:focus {
-                border-color: #667eea;
-                box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
-            }
+        .form-control:focus {
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
 
         .btn-primary {
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
@@ -150,25 +165,25 @@
             transition: all 0.3s ease;
         }
 
-            .btn-primary:hover {
-                transform: translateY(-2px);
-                box-shadow: 0 7px 14px rgba(102, 126, 234, 0.3);
-            }
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 7px 14px rgba(102, 126, 234, 0.3);
+        }
 
         .btn-danger {
             background: linear-gradient(135deg, #e3342f 0%, #cc1f1a 100%);
             border: none;
-            border-radius: 10px;
-            padding: 6px 16px;
-            font-size: 0.9rem;
+            border-radius: 8px;
+            padding: 6px 12px;
+            font-size: 0.85rem;
         }
 
         .btn-warning {
             background: linear-gradient(135deg, #ffed4a 0%, #f1c40f 100%);
             border: none;
-            border-radius: 10px;
-            padding: 6px 16px;
-            font-size: 0.9rem;
+            border-radius: 8px;
+            padding: 6px 12px;
+            font-size: 0.85rem;
             color: #2c3e50;
         }
 
@@ -197,17 +212,22 @@
             color: white;
         }
 
+        .alert-warning {
+            background: linear-gradient(135deg, #ffed4a 0%, #f1c40f 100%);
+            color: #2c3e50;
+        }
+
         .table {
             border-radius: 16px;
             overflow: hidden;
         }
 
-            .table thead th {
-                background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-                color: white;
-                border: none;
-                padding: 15px;
-            }
+        .table thead th {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 15px;
+        }
 
         .badge-active {
             background: #d4edda;
@@ -225,27 +245,28 @@
             font-size: 0.8rem;
         }
 
-        .resource-type {
-            display: inline-block;
-            padding: 4px 10px;
-            border-radius: 12px;
+        .badge-success {
+            background: #d4edda;
+            color: #155724;
+            padding: 3px 10px;
+            border-radius: 20px;
             font-size: 0.75rem;
-            font-weight: 600;
         }
 
-        .type-website {
-            background: #e3f2fd;
-            color: #1976d2;
+        .badge-danger {
+            background: #f8d7da;
+            color: #721c24;
+            padding: 3px 10px;
+            border-radius: 20px;
+            font-size: 0.75rem;
         }
 
-        .type-api {
-            background: #f3e5f5;
-            color: #7b1fa2;
-        }
-
-        .type-database {
-            background: #fff3e0;
-            color: #e65100;
+        .badge-warning {
+            background: #fff3cd;
+            color: #856404;
+            padding: 3px 10px;
+            border-radius: 20px;
+            font-size: 0.75rem;
         }
 
         .stats-card {
@@ -280,15 +301,53 @@
             text-decoration: none;
         }
 
-            .text-link:hover {
-                text-decoration: underline;
-            }
-
-
+        .text-link:hover {
+            text-decoration: underline;
         }
 
-        .animate-in {
-            animation: slideIn 0.5s ease forwards;
+        /* Стили для результатов проверки */
+        .result-row {
+            background: #f8f9fa;
+        }
+
+        .result-content {
+            padding: 20px;
+            border-top: 1px solid #e0e0e0;
+        }
+
+        .score-circle {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 1.2rem;
+        }
+
+        .score-high {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .score-medium {
+            background: #fff3cd;
+            color: #856404;
+        }
+
+        .score-low {
+            background: #f8d7da;
+            color: #721c24;
+        }
+
+        .toggle-result {
+            cursor: pointer;
+            transition: transform 0.3s ease;
+        }
+
+        .toggle-result.rotated {
+            transform: rotate(90deg);
         }
     </style>
 </head>
@@ -335,13 +394,24 @@
                     <div class="stats-label">Неактивных</div>
                 </div>
             </div>
-            <div class="col-md-3">
-                <div class="stats-card">
-                    <div class="stats-number">@Model.Resources.Count</div>
-                    <div class="stats-label">Типов ресурсов</div>
-                </div>
-            </div>
+            
         </div>
+
+        <!-- Сообщения -->
+        @if (!string.IsNullOrEmpty(Model.SuccessMessage))
+        {
+            <div class="alert alert-success alert-dismissible fade show" role="alert">
+                <i class="fas fa-check-circle"></i> @Model.SuccessMessage
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+        }
+        @if (!string.IsNullOrEmpty(Model.ErrorMessage))
+        {
+            <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                <i class="fas fa-times-circle"></i> @Model.ErrorMessage
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+        }
 
         <!-- Форма добавления ресурса -->
         <div class="card">
@@ -350,31 +420,16 @@
                 <span class="government-badge"><i class="fas fa-building"></i> Government</span>
             </div>
             <div class="card-body">
-                @if (!string.IsNullOrEmpty(Model.SuccessMessage))
-                {
-                    <div class="alert alert-success alert-dismissible fade show" role="alert">
-                        <i class="fas fa-check-circle"></i> @Model.SuccessMessage
-                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-                    </div>
-                }
-                @if (!string.IsNullOrEmpty(Model.ErrorMessage))
-                {
-                    <div class="alert alert-danger alert-dismissible fade show" role="alert">
-                        <i class="fas fa-times-circle"></i> @Model.ErrorMessage
-                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-                    </div>
-                }
-
                 <form method="post" asp-page-handler="Add">
                     <div class="row">
-                        <div class="col-md-4 mb-3">
+                        <div class="col-md-6 mb-3">
                             <label asp-for="NewResource.Name" class="form-label fw-bold">
                                 <i class="fas fa-tag"></i> Название ресурса
                             </label>
                             <input type="text" asp-for="NewResource.Name" class="form-control" placeholder="Введите название">
                             <span asp-validation-for="NewResource.Name" class="text-danger"></span>
                         </div>
-                        <div class="col-md-5 mb-3">
+                        <div class="col-md-6 mb-3">
                             <label asp-for="NewResource.Url" class="form-label fw-bold">
                                 <i class="fas fa-link"></i> URL адрес
                             </label>
@@ -404,7 +459,6 @@
                             <tr>
                                 <th>Название</th>
                                 <th>URL</th>
-                                <th>Тип</th>
                                 <th>Статус</th>
                                 <th>Действия</th>
                             </tr>
@@ -414,17 +468,18 @@
                             {
                                 @foreach (var resource in Model.Resources)
                                 {
-                                    <tr>
-                                        <td>
+                                    var checkResult = Model.CheckResults.ContainsKey(resource.Id) ? Model.CheckResults[resource.Id] : null;
+                                    <tr class="@(checkResult != null ? "result-row" : "")">
+                                        <td style="vertical-align: middle">
                                             <strong>@resource.Name</strong>
                                             <span class="government-badge"><i class="fas fa-building"></i> Gov</span>
                                         </td>
-                                        <td>
+                                        <td style="vertical-align: middle">
                                             <a href="@resource.Url" target="_blank" class="text-link">
                                                 <i class="fas fa-external-link-alt"></i> @(resource.Url.Length > 50 ? resource.Url.Substring(0, 47) + "..." : resource.Url)
                                             </a>
                                         </td>
-                                        <td>
+                                        <td style="vertical-align: middle">
                                             @if (resource.IsActive)
                                             {
                                                 <span class="badge-active">
@@ -438,7 +493,13 @@
                                                 </span>
                                             }
                                         </td>
-                                        <td>
+                                        <td style="vertical-align: middle">
+                                            <form method="post" asp-page-handler="CheckResource" style="display: inline-block;">
+                                                <input type="hidden" name="id" value="@resource.Id" />
+                                                <button type="submit" class="btn-check-resource" title="Запустить проверку">
+                                                    <i class="fas fa-play"></i> Проверить
+                                                </button>
+                                            </form>
                                             <form method="post" asp-page-handler="ToggleActive" style="display: inline-block;">
                                                 <input type="hidden" name="id" value="@resource.Id" />
                                                 <button type="submit" class="btn btn-warning btn-sm" title="@(resource.IsActive ? "Деактивировать" : "Активировать")">
@@ -453,12 +514,123 @@
                                             </form>
                                         </td>
                                     </tr>
+                                    
+                                    @if (checkResult != null)
+                                    {
+                                        <tr class="result-details">
+                                            <td colspan="4" class="p-0">
+                                                <div class="result-content">
+                                                    <div class="d-flex justify-content-between align-items-center mb-3">
+                                                        <h6 class="mb-0">
+                                                            <i class="fas fa-chart-line"></i> Результаты проверки от @checkResult.CheckTime.ToString("dd.MM.yyyy HH:mm:ss")
+                                                        </h6>
+                                                        <form method="post" asp-page-handler="ToggleResult" style="display: inline-block;">
+                                                            <input type="hidden" name="id" value="@resource.Id" />
+                                                            <button type="submit" class="btn btn-sm btn-outline-secondary toggle-result @(checkResult.IsExpanded ? "rotated" : "")" title="Свернуть/Развернуть">
+                                                                <i class="fas fa-chevron-right"></i>
+                                                            </button>
+                                                        </form>
+                                                    </div>
+                                                    
+                                                    @if (checkResult.IsExpanded)
+                                                    {
+                                                        if (!string.IsNullOrEmpty(checkResult.ErrorMessage))
+                                                        {
+                                                            <div class="alert alert-danger">@checkResult.ErrorMessage</div>
+                                                        }
+                                                        else
+                                                        {
+                                                            <div class="row">
+                                                                <!-- Общая оценка -->
+                                                                <div class="col-md-3 text-center mb-3">
+                                                                    <div class="score-circle @(checkResult.OverallScore >= 70 ? "score-high" : (checkResult.OverallScore >= 40 ? "score-medium" : "score-low")) mx-auto">
+                                                                        @checkResult.OverallScore
+                                                                    </div>
+                                                                    <small class="text-muted">Общая оценка</small>
+                                                                </div>
+                                                                
+                                                                <!-- Статистика -->
+                                                                <div class="col-md-9">
+                                                                    <div class="row">
+                                                                        <div class="col-md-3 mb-2">
+                                                                            <span class="badge @(checkResult.HasBadWords ? "badge-danger" : "badge-success")">
+                                                                                <i class="fas fa-ban"></i> Нецензурная лексика: @checkResult.BadWordsCount
+                                                                            </span>
+                                                                        </div>
+                                                                        <div class="col-md-3 mb-2">
+                                                                            <span class="badge @(checkResult.HasGoogleForms ? "badge-warning" : "badge-success")">
+                                                                                <i class="fab fa-google"></i> Google Forms: @checkResult.GoogleFormsCount
+                                                                            </span>
+                                                                        </div>
+                                                                        <div class="col-md-3 mb-2">
+                                                                            <span class="badge @(checkResult.HasExtremistMaterials ? "badge-danger" : "badge-success")">
+                                                                                <i class="fas fa-gavel"></i> Экстремизм: @checkResult.ExtremistCount
+                                                                            </span>
+                                                                        </div>
+                                                                        <div class="col-md-3 mb-2">
+                                                                            <span class="badge @(!checkResult.HasConsent ? "badge-warning" : "badge-success")">
+                                                                                <i class="fas fa-shield-alt"></i> Согласие на ПД: @(checkResult.HasConsent ? "Есть" : "Нет")
+                                                                            </span>
+                                                                        </div>
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                            
+                                                            <!-- Детали нарушений -->
+                                                            @if (checkResult.HasBadWords && checkResult.BadWordsList != null && checkResult.BadWordsList.Any())
+                                                            {
+                                                                <div class="mt-3">
+                                                                    <strong><i class="fas fa-list"></i> Найденные нецензурные слова:</strong>
+                                                                    <div class="d-flex flex-wrap gap-2 mt-1">
+                                                                        @foreach (var word in checkResult.BadWordsList.Take(10))
+                                                                        {
+                                                                            <span class="badge bg-danger">@word.Key (@word.Value)</span>
+                                                                        }
+                                                                    </div>
+                                                                </div>
+                                                            }
+                                                            
+                                                            @if (checkResult.HasGoogleForms && checkResult.GoogleFormsList != null && checkResult.GoogleFormsList.Any())
+                                                            {
+                                                                <div class="mt-3">
+                                                                    <strong><i class="fab fa-google"></i> Найденные Google Forms:</strong>
+                                                                    <ul class="mt-1">
+                                                                        @foreach (var form in checkResult.GoogleFormsList.Take(5))
+                                                                        {
+                                                                            <li><small>@form</small></li>
+                                                                        }
+                                                                    </ul>
+                                                                    @if (checkResult.IsPotentiallyMalicious)
+                                                                    {
+                                                                        <div class="alert alert-warning mt-2">⚠️ Обнаружены потенциально вредоносные формы!</div>
+                                                                    }
+                                                                </div>
+                                                            }
+                                                            
+                                                            @if (checkResult.HasExtremistMaterials && checkResult.ExtremistList != null && checkResult.ExtremistList.Any())
+                                                            {
+                                                                <div class="mt-3">
+                                                                    <strong><i class="fas fa-gavel"></i> Найденные экстремистские материалы:</strong>
+                                                                    <ul class="mt-1">
+                                                                        @foreach (var material in checkResult.ExtremistList.Take(5))
+                                                                        {
+                                                                            <li><small class="text-danger">@material</small></li>
+                                                                        }
+                                                                    </ul>
+                                                                </div>
+                                                            }
+                                                        }
+                                                    }
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    }
                                 }
                             }
                             else
                             {
                                 <tr>
-                                    <td colspan="5" class="text-center py-4 text-muted">
+                                    <td colspan="4" class="text-center py-4 text-muted">
                                         <i class="fas fa-inbox fa-2x mb-2 d-block"></i>
                                         Нет добавленных ресурсов. Добавьте первый ресурс с помощью формы выше.
                                     </td>
@@ -469,30 +641,10 @@
                 </div>
             </div>
         </div>
-
-        <!-- Информация -->
-        <div class="card">
-            <div class="card-header">
-                <i class="fas fa-info-circle"></i> Информация
-            </div>
-            <div class="card-body">
-                <div class="row">
-                    <div class="col-md-6">
-                        <h6><i class="fas fa-database"></i> О системе</h6>
-                        <p class="text-muted small">
-                            Все ресурсы, добавленные через эту страницу, автоматически получают тип портала <strong>Government</strong>.
-                            Это означает, что они будут использоваться для мониторинга правительственных и государственных порталов.
-                        </p>
-                    </div>
-                   
-                </div>
-            </div>
-        </div>
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script>
-        // Плавное появление элементов
         document.addEventListener('DOMContentLoaded', function() {
             const elements = document.querySelectorAll('.card');
             elements.forEach((el, index) => {
