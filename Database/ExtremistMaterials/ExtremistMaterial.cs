@@ -1,4 +1,4 @@
-﻿namespace MonitoringServiceCore.Database.ExtremistMaterialPackage
+﻿namespace MonitoringServiceCore.Database.ExtremistMaterials
 {
     public class ExtremistMaterial
     {

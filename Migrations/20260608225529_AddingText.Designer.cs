@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using MonitoringServiceCore.Database.dbContext;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
@@ -12,9 +13,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace MonitoringServiceCore.Migrations
 {
     [DbContext(typeof(MonitoringDbContext))]
-    partial class MonitoringDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260608225529_AddingText")]
+    partial class AddingText
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -23,34 +26,7 @@ namespace MonitoringServiceCore.Migrations
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
 
-            modelBuilder.Entity("MonitoringServiceCore.Database.ExtremistMaterials.ExtremistCheckResult", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid");
-
-                    b.Property<DateTime>("CheckTime")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<string>("ErrorMessage")
-                        .HasColumnType("text");
-
-                    b.Property<Guid>("FoundMaterialId")
-                        .HasColumnType("uuid");
-
-                    b.Property<bool>("HasExtremistMaterials")
-                        .HasColumnType("boolean");
-
-                    b.Property<string>("Url")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.HasKey("Id");
-
-                    b.ToTable("ExtremistCheckResults");
-                });
-
-            modelBuilder.Entity("MonitoringServiceCore.Database.ExtremistMaterials.ExtremistMaterial", b =>
+            modelBuilder.Entity("MonitoringServiceCore.Database.ExtremistMaterialPackage.ExtremistMaterial", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
@@ -68,6 +44,7 @@ namespace MonitoringServiceCore.Migrations
                         .HasColumnType("character varying(1000)");
 
                     b.Property<int>("Number")
+                        .HasMaxLength(50)
                         .HasColumnType("integer");
 
                     b.Property<int>("PageNumber")
@@ -88,43 +65,6 @@ namespace MonitoringServiceCore.Migrations
                     b.ToTable("ExtremistMaterials");
                 });
 
-            modelBuilder.Entity("MonitoringServiceCore.Database.ExtremistMaterials.FoundMaterial", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid");
-
-                    b.Property<Guid>("CheckResultId")
-                        .HasColumnType("uuid");
-
-                    b.Property<string>("Context")
-                        .HasColumnType("text");
-
-                    b.Property<int>("Count")
-                        .HasColumnType("integer");
-
-                    b.Property<DateTime?>("DecisionDate")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<string>("Description")
-                        .HasColumnType("text");
-
-                    b.Property<string>("MatchType")
-                        .HasColumnType("text");
-
-                    b.Property<string>("MatchedKeyword")
-                        .HasColumnType("text");
-
-                    b.Property<int>("Number")
-                        .HasColumnType("integer");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("CheckResultId");
-
-                    b.ToTable("FoundMaterials");
-                });
-
             modelBuilder.Entity("MonitoringServiceCore.Database.MonitoringPortalResources.MonitoringResource", b =>
                 {
                     b.Property<Guid>("Id")
@@ -142,7 +82,8 @@ namespace MonitoringServiceCore.Migrations
 
                     b.Property<string>("Name")
                         .IsRequired()
-                        .HasColumnType("text");
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
 
                     b.Property<int>("Type")
                         .HasColumnType("integer");
@@ -152,7 +93,8 @@ namespace MonitoringServiceCore.Migrations
 
                     b.Property<string>("Url")
                         .IsRequired()
-                        .HasColumnType("text");
+                        .HasMaxLength(300)
+                        .HasColumnType("character varying(300)");
 
                     b.HasKey("Id");
 
@@ -273,17 +215,6 @@ namespace MonitoringServiceCore.Migrations
                     b.ToTable("SiteAnalyses");
                 });
 
-            modelBuilder.Entity("MonitoringServiceCore.Database.ExtremistMaterials.FoundMaterial", b =>
-                {
-                    b.HasOne("MonitoringServiceCore.Database.ExtremistMaterials.ExtremistCheckResult", "CheckResult")
-                        .WithMany("FoundMaterials")
-                        .HasForeignKey("CheckResultId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("CheckResult");
-                });
-
             modelBuilder.Entity("MonitoringServiceCore.Database.Roles.User", b =>
                 {
                     b.HasOne("MonitoringServiceCore.Database.Roles.Role", "UserRole")
@@ -293,11 +224,6 @@ namespace MonitoringServiceCore.Migrations
                         .IsRequired();
 
                     b.Navigation("UserRole");
-                });
-
-            modelBuilder.Entity("MonitoringServiceCore.Database.ExtremistMaterials.ExtremistCheckResult", b =>
-                {
-                    b.Navigation("FoundMaterials");
                 });
 
             modelBuilder.Entity("MonitoringServiceCore.Database.Roles.Role", b =>

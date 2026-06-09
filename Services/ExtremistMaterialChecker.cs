@@ -1,25 +1,24 @@
-﻿using global::MonitoringServiceCore.Database.dbContext;
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 using MonitoringServiceCore.Database.dbContext;
-using MonitoringServiceCore.Database.ExtremistMaterialPackage;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
+using MonitoringServiceCore.Database.ExtremistMaterials;
+using System.Text;
+using System.Text.RegularExpressions;
 
 namespace MonitoringServiceCore.Services
 {
     public class ExtremistMaterialChecker
     {
         private readonly MonitoringDbContext _dbContext;
+        private readonly ILogger<ExtremistMaterialChecker> _logger;
 
-        public ExtremistMaterialChecker(MonitoringDbContext dbContext)
+        public ExtremistMaterialChecker(MonitoringDbContext dbContext, ILogger<ExtremistMaterialChecker> logger)
         {
             _dbContext = dbContext;
+            _logger = logger;
         }
 
         /// <summary>
-        /// Проверяет HTML-контент на наличие упоминаний экстремистских материалов
+        /// Проверяет HTML-контент на наличие экстремистских материалов из столбца Text
         /// </summary>
         public async Task<ExtremistCheckResult> CheckContentAsync(string htmlContent, string url)
         {
@@ -29,72 +28,138 @@ namespace MonitoringServiceCore.Services
                 CheckTime = DateTime.UtcNow
             };
 
-            var materials = await _dbContext.ExtremistMaterials.ToListAsync();
-            if (!materials.Any())
+            try
             {
-                result.ErrorMessage = "Список экстремистских материалов не загружен";
-                return result;
-            }
-
-            var lowerContent = htmlContent.ToLowerInvariant();
-
-            foreach (var material in materials)
-            {
-                // Ищем точное совпадение описания или его части
-                var description = material.Description?.ToLowerInvariant();
-                if (string.IsNullOrEmpty(description)) continue;
-
-                // Разбиваем описание на ключевые слова (например, по пробелам)
-                var keywords = description.Split(new[] { ' ', ',', '.', '!', '?', ';', ':', '\n', '\r' }, StringSplitOptions.RemoveEmptyEntries)
-                                            .Where(w => w.Length > 3)
-                                            .Distinct()
-                                            .Take(10); // берём первые 10 значимых слов
-
-                bool found = false;
-                string matchedKeyword = null;
-
-                foreach (var kw in keywords)
+                var materials = await _dbContext.ExtremistMaterials.ToListAsync();
+                if (!materials.Any())
                 {
-                    if (lowerContent.Contains(kw))
+                    result.ErrorMessage = "Список экстремистских материалов не загружен";
+                    _logger.LogWarning("Список экстремистских материалов пуст");
+                    return result;
+                }
+
+                _logger.LogInformation("Начинаем проверку контента на наличие {Count} экстремистских материалов", materials.Count);
+
+                // Очищаем HTML от тегов для более точного поиска
+                var cleanText = StripHtml(htmlContent);
+                var lowerCleanText = cleanText.ToLowerInvariant();
+                var lowerHtml = htmlContent.ToLowerInvariant();
+
+                foreach (var material in materials)
+                {
+                    // Проверяем текст из столбца Text (слова в кавычках через запятую)
+                    if (!string.IsNullOrEmpty(material.Text))
                     {
-                        found = true;
-                        matchedKeyword = kw;
-                        break;
+                        var foundMaterial = CheckMaterialText(material, lowerCleanText, lowerHtml);
+                        if (foundMaterial != null)
+                        {
+                            result.FoundMaterials.Add(foundMaterial);
+                        }
                     }
                 }
 
-                if (found)
+                result.HasExtremistMaterials = result.FoundMaterials.Any();
+
+                _logger.LogInformation("Проверка завершена. Найдено материалов: {Count}", result.FoundMaterials.Count);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Ошибка при проверке экстремистских материалов для URL {Url}", url);
+                result.ErrorMessage = $"Ошибка при проверке: {ex.Message}";
+            }
+
+            return result;
+        }
+
+        /// <summary>
+        /// Проверяет наличие текста из материала в проверяемом контенте
+        /// </summary>
+        private FoundMaterial? CheckMaterialText(ExtremistMaterial material, string cleanText, string htmlText)
+        {
+            if (string.IsNullOrEmpty(material.Text)) return null;
+
+            // Разбиваем текст по запятым (могут быть несколько фраз через запятую)
+            var textParts = material.Text.Split(new[] { ',', ';' }, StringSplitOptions.RemoveEmptyEntries);
+
+            foreach (var part in textParts)
+            {
+                var trimmedPart = part.Trim().ToLowerInvariant();
+                if (string.IsNullOrEmpty(trimmedPart) || trimmedPart.Length < 3) continue;
+
+                // Ищем точное совпадение фразы
+                if (cleanText.Contains(trimmedPart) || htmlText.Contains(trimmedPart))
                 {
-                    result.FoundMaterials.Add(new FoundMaterial
+                    var foundMaterial = new FoundMaterial
                     {
                         Number = material.Number,
                         Description = material.Description,
-                        MatchedKeyword = matchedKeyword,
-                        DecisionDate = material.DecisionDate
-                    });
+                        MatchedKeyword = trimmedPart,
+                        DecisionDate = material.DecisionDate,
+                        MatchType = "Совпадение по тексту"
+                    };
+
+                    // Находим контекст вокруг найденного слова
+                    foundMaterial.Context = GetContextAroundKeyword(cleanText, trimmedPart);
+
+                    return foundMaterial;
                 }
             }
 
-            result.HasExtremistMaterials = result.FoundMaterials.Any();
-            return result;
+            return null;
+        }
+
+        /// <summary>
+        /// Получает контекст вокруг найденного ключевого слова
+        /// </summary>
+        private string GetContextAroundKeyword(string text, string keyword, int contextLength = 150)
+        {
+            if (string.IsNullOrEmpty(text) || string.IsNullOrEmpty(keyword)) return string.Empty;
+
+            var index = text.ToLowerInvariant().IndexOf(keyword);
+            if (index < 0) return string.Empty;
+
+            var start = Math.Max(0, index - contextLength);
+            var length = Math.Min(text.Length - start, contextLength * 2);
+            var context = text.Substring(start, length);
+
+            // Добавляем многоточие, если контекст обрезан
+            if (start > 0) context = "..." + context;
+            if (start + length < text.Length) context = context + "...";
+
+            return context;
+        }
+
+        /// <summary>
+        /// Удаляет HTML-теги из строки
+        /// </summary>
+        private string StripHtml(string html)
+        {
+            if (string.IsNullOrEmpty(html)) return string.Empty;
+
+            // Удаляем скрипты и стили
+            var result = Regex.Replace(html, @"<script[^>]*>.*?</script>", "", RegexOptions.IgnoreCase | RegexOptions.Singleline);
+            result = Regex.Replace(result, @"<style[^>]*>.*?</style>", "", RegexOptions.IgnoreCase | RegexOptions.Singleline);
+
+            // Удаляем HTML теги
+            result = Regex.Replace(result, @"<[^>]+>", " ");
+
+            // Декодируем HTML сущности
+            result = System.Net.WebUtility.HtmlDecode(result);
+
+            // Заменяем множественные пробелы на один
+            result = Regex.Replace(result, @"\s+", " ");
+
+            return result.Trim();
+        }
+
+        /// <summary>
+        /// Проверяет текст с дополнительным контекстом
+        /// </summary>
+        public async Task<ExtremistCheckResult> CheckContentWithContextAsync(string htmlContent, string url)
+        {
+            return await CheckContentAsync(htmlContent, url);
         }
     }
-
-    public class ExtremistCheckResult
-    {
-        public string Url { get; set; }
-        public DateTime CheckTime { get; set; }
-        public bool HasExtremistMaterials { get; set; }
-        public List<FoundMaterial> FoundMaterials { get; set; } = new();
-        public string ErrorMessage { get; set; }
-        public bool HasErrors => !string.IsNullOrEmpty(ErrorMessage);
-    }
-
-    public class FoundMaterial
-    {
-        public int Number { get; set; }
-        public string Description { get; set; }
-        public string MatchedKeyword { get; set; }
-        public DateTime? DecisionDate { get; set; }
-    }
 }
+
+  

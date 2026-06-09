@@ -32,7 +32,6 @@
             margin: 0 auto;
         }
 
-        /* СТИЛИ ДЛЯ ВЕРХНЕЙ ПАНЕЛИ С КНОПКОЙ */
         .top-bar {
             display: flex;
             justify-content: space-between;
@@ -198,11 +197,44 @@
             padding: 6px 12px;
             font-weight: 500;
         }
+
+        /* Стили для деталей нарушений */
+        .material-card {
+            background: #fff5f5;
+            border-left: 4px solid #e3342f;
+            padding: 15px;
+            margin-bottom: 15px;
+            border-radius: 8px;
+        }
+
+        .material-number {
+            font-size: 1.1rem;
+            font-weight: bold;
+            color: #e3342f;
+        }
+
+        .material-keyword {
+            background: #e3342f;
+            color: white;
+            padding: 3px 10px;
+            border-radius: 15px;
+            font-size: 0.85rem;
+            display: inline-block;
+        }
+
+        .material-context {
+            background: #f8f9fa;
+            padding: 10px;
+            border-radius: 6px;
+            font-family: monospace;
+            font-size: 0.9rem;
+            margin-top: 10px;
+        }
     </style>
 </head>
 <body>
     <div class="container-custom">
-        <!-- ========== ВЕРХНЯЯ ПАНЕЛЬ С КНОПКОЙ ========== -->
+        <!-- Верхняя панель -->
         <div class="top-bar">
             <div class="nav-buttons">
                 <a href="/PortalPages" class="btn-kfu">
@@ -331,6 +363,84 @@
                             </ul>
                         </div>
                     </div>
+
+                    <!-- Детали найденных экстремистских материалов -->
+                    @if (Model.ExtremistCheckResult != null && Model.ExtremistCheckResult.HasExtremistMaterials && Model.ExtremistCheckResult.FoundMaterials.Any())
+                    {
+                        <div class="mt-4">
+                            <h5 class="text-danger">
+                                <i class="fas fa-exclamation-triangle"></i> Детали найденных экстремистских материалов:
+                            </h5>
+                            @foreach (var material in Model.ExtremistCheckResult.FoundMaterials)
+                            {
+                                <div class="material-card">
+                                    <div class="d-flex justify-content-between align-items-start mb-2">
+                                        <div>
+                                            <span class="material-number">Материал №@material.Number</span>
+                                            @if (!string.IsNullOrEmpty(material.MatchedKeyword))
+                                            {
+                                                <span class="material-keyword ms-2">
+                                                    <i class="fas fa-search"></i> "@material.MatchedKeyword"
+                                                </span>
+                                            }
+                                        </div>
+                                        @if (material.DecisionDate.HasValue)
+                                        {
+                                            <small class="text-muted">Дата решения: @material.DecisionDate.Value.ToString("dd.MM.yyyy")</small>
+                                        }
+                                    </div>
+                                    <p class="mb-2"><strong>Описание:</strong> @material.Description</p>
+                                    @if (!string.IsNullOrEmpty(material.Context))
+                                    {
+                                        <div class="material-context">
+                                            <i class="fas fa-quote-left text-muted me-1"></i>
+                                            @material.Context
+                                        </div>
+                                    }
+                                </div>
+                            }
+                        </div>
+                    }
+
+                    <!-- Детали найденных нецензурных слов -->
+                    @if (Model.AnalysisResult != null && Model.AnalysisResult.HasBadWords && Model.AnalysisResult.BadWordsFound.Any())
+                    {
+                        <div class="mt-4">
+                            <h5 class="text-warning">
+                                <i class="fas fa-ban"></i> Найденные нецензурные слова:
+                            </h5>
+                            <div class="d-flex flex-wrap gap-2 mt-2">
+                                @foreach (var word in Model.AnalysisResult.BadWordsFound.OrderByDescending(w => w.Value).Take(20))
+                                {
+                                    <span class="badge bg-danger">
+                                        @word.Key (@word.Value)
+                                    </span>
+                                }
+                            </div>
+                        </div>
+                    }
+
+                    <!-- Детали найденных Google Forms -->
+                    @if (Model.GoogleFormsResult != null && Model.GoogleFormsResult.HasGoogleForms && Model.GoogleFormsResult.FormUrls.Any())
+                    {
+                        <div class="mt-4">
+                            <h5 class="text-warning">
+                                <i class="fab fa-google"></i> Найденные Google Forms:
+                            </h5>
+                            <ul class="mt-2">
+                                @foreach (var form in Model.GoogleFormsResult.FormUrls.Take(10))
+                                {
+                                    <li><a href="@form" target="_blank">@form</a></li>
+                                }
+                            </ul>
+                            @if (Model.GoogleFormsResult.IsPotentiallyMalicious)
+                            {
+                                <div class="alert alert-danger mt-2">
+                                    <i class="fas fa-exclamation-triangle"></i> ⚠️ Обнаружены потенциально вредоносные формы!
+                                </div>
+                            }
+                        </div>
+                    }
                 </div>
             </div>
         }

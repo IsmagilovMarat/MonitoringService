@@ -1,13 +1,14 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
+using Microsoft.EntityFrameworkCore;
 using MonitoringServiceCore.Database;
 using MonitoringServiceCore.Database.BadWord;
 using MonitoringServiceCore.Database.dbContext;
+using MonitoringServiceCore.Database.ExtremistMaterials;
 using MonitoringServiceCore.Database.GoogleForms;
 using MonitoringServiceCore.Database.Roles;
 using MonitoringServiceCore.Email.Interface;
-using MonitoringServiceCore.Email.Jobs;
 using MonitoringServiceCore.Services;
 using System.ComponentModel.DataAnnotations;
 
@@ -23,6 +24,7 @@ namespace MonitoringServiceCore.Pages
         private readonly PersonalDataConsentService _consentService;
         private readonly ExtremistMaterialChecker _extremistChecker;
         private readonly IEmailService _emailService;
+        private readonly ILogger<IndexModel> _logger;
 
         public ExtremistCheckResult? ExtremistCheckResult { get; set; }
         public List<User> Users { get; set; } = new List<User>();
@@ -45,7 +47,8 @@ namespace MonitoringServiceCore.Pages
             GoogleFormsDetector googleFormsDetector,
             PersonalDataConsentService consentService,
             ExtremistMaterialChecker extremistChecker,
-            IEmailService emailService)
+            IEmailService emailService,
+            ILogger<IndexModel> logger)
         {
             _emailService = emailService;
             _dbContext = dbContext;
@@ -54,6 +57,7 @@ namespace MonitoringServiceCore.Pages
             _googleFormsDetector = googleFormsDetector;
             _consentService = consentService;
             _extremistChecker = extremistChecker;
+            _logger = logger;
         }
 
         public void OnGet()
@@ -65,10 +69,12 @@ namespace MonitoringServiceCore.Pages
 
                 AnalysisResult = new AnalysisResult();
                 GoogleFormsResult = new GoogleFormsDetectionResult();
+                ExtremistCheckResult = new ExtremistCheckResult();
+                ConsentResult = new ConsentCheckResult();
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"Ошибка при загрузке страницы: {ex.Message}");
+                _logger.LogError(ex, "Ошибка при загрузке страницы");
                 Users = new List<User>();
                 DictionaryInfo = new DictionaryInfo();
             }
@@ -87,11 +93,83 @@ namespace MonitoringServiceCore.Pages
             {
                 HasResults = true;
 
+                _logger.LogInformation("Начинаем анализ сайта: {SiteUrl}", SiteUrl);
+
                 // Загружаем HTML
                 var htmlContent = await _siteDataDownloader.DownloadHtmlAsync(SiteUrl!);
 
-                // 1. Проверка экстремистских материалов (РАСКОММЕНТИРОВАНО)
-                ExtremistCheckResult = await _extremistChecker.CheckContentAsync(htmlContent, SiteUrl!);
+                // 1. Проверка экстремистских материалов
+                var checkResult = await _extremistChecker.CheckContentWithContextAsync(htmlContent, SiteUrl!);
+
+                // Создаем результат для отображения
+                var displayResult = new ExtremistCheckResult
+                {
+                    Id = Guid.NewGuid(),
+                    Url = SiteUrl!,
+                    CheckTime = DateTime.UtcNow,
+                    HasExtremistMaterials = checkResult.HasExtremistMaterials,
+                    ErrorMessage = checkResult.ErrorMessage,
+                    FoundMaterials = new List<FoundMaterial>()
+                };
+
+                // Заполняем найденные материалы
+                if (checkResult.HasExtremistMaterials && checkResult.FoundMaterials.Any())
+                {
+                    foreach (var material in checkResult.FoundMaterials)
+                    {
+                        displayResult.FoundMaterials.Add(new FoundMaterial
+                        {
+                            Id = Guid.NewGuid(),
+                            Number = material.Number,
+                            Count = 1,
+                            Description = material.Description,
+                            MatchedKeyword = material.MatchedKeyword,
+                            MatchType = material.MatchType,
+                            Context = material.Context,
+                            DecisionDate = material.DecisionDate,
+                            CheckResultId = displayResult.Id
+                        });
+                    }
+
+                    // Логируем найденные материалы
+                    foreach (var material in displayResult.FoundMaterials)
+                    {
+                        _logger.LogWarning("Обнаружен экстремистский материал #{Number}: {Description} (совпадение: {Keyword})",
+                            material.Number, material.Description, material.MatchedKeyword);
+                    }
+                }
+
+                // Сохраняем в БД асинхронно (не блокируем отображение)
+                _ = Task.Run(async () =>
+                {
+                    try
+                    {
+                        var savedResult = new ExtremistCheckResult
+                        {
+                            Id = displayResult.Id,
+                            Url = displayResult.Url,
+                            CheckTime = displayResult.CheckTime,
+                            HasExtremistMaterials = displayResult.HasExtremistMaterials,
+                            ErrorMessage = displayResult.ErrorMessage,
+                        };
+
+                        await _dbContext.ExtremistCheckResults.AddAsync(savedResult);
+
+                        if (displayResult.FoundMaterials.Any())
+                        {
+                            await _dbContext.FoundMaterials.AddRangeAsync(displayResult.FoundMaterials);
+                        }
+
+                        await _dbContext.SaveChangesAsync();
+                        _logger.LogInformation("Результаты проверки сохранены в БД для URL {SiteUrl}", SiteUrl);
+                    }
+                    catch (Exception ex)
+                    {
+                        _logger.LogError(ex, "Ошибка при сохранении результатов в БД для URL {SiteUrl}", SiteUrl);
+                    }
+                });
+
+                ExtremistCheckResult = displayResult;
 
                 // 2. Проверка нецензурной лексики
                 AnalysisResult = _badWordAnalyzer.AnalyzeContent(htmlContent);
@@ -108,7 +186,6 @@ namespace MonitoringServiceCore.Pages
 
                 var messages = new List<string>();
 
-                // Добавляем проверки на null перед использованием
                 if (ExtremistCheckResult != null && ExtremistCheckResult.HasExtremistMaterials)
                 {
                     messages.Add($"Обнаружено {ExtremistCheckResult.FoundMaterials.Count} экстремистских материалов");
@@ -147,8 +224,8 @@ namespace MonitoringServiceCore.Pages
             }
             catch (Exception ex)
             {
+                _logger.LogError(ex, "Ошибка при анализе сайта {SiteUrl}", SiteUrl);
                 ErrorMessage = $"Ошибка при анализе сайта: {ex.Message}";
-                Console.WriteLine($"Ошибка: {ex.Message}");
             }
 
             return Page();
@@ -162,33 +239,55 @@ namespace MonitoringServiceCore.Pages
                 var messageBuilder = new System.Text.StringBuilder();
                 messageBuilder.AppendLine($"<h2>Анализ сайта {SiteUrl} завершён</h2>");
                 messageBuilder.AppendLine($"<p><strong>Время проверки:</strong> {DateTime.Now:dd.MM.yyyy HH:mm:ss}</p>");
+                messageBuilder.AppendLine("<hr/>");
 
-                // Добавляем проверки на null
+                bool hasViolations = false;
+
                 if (ExtremistCheckResult != null && ExtremistCheckResult.HasExtremistMaterials)
-                    messageBuilder.AppendLine($"<p style='color:red'>⚠️ Экстремистские материалы: {ExtremistCheckResult.FoundMaterials.Count}</p>");
+                {
+                    hasViolations = true;
+                    messageBuilder.AppendLine($"<h3 style='color:red'>⚠️ Экстремистские материалы ({ExtremistCheckResult.FoundMaterials.Count})</h3>");
+                    foreach (var material in ExtremistCheckResult.FoundMaterials)
+                    {
+                        messageBuilder.AppendLine($"<div style='border:1px solid #ff4444; margin:10px; padding:10px; border-radius:5px'>");
+                        messageBuilder.AppendLine($"<p><strong>№{material.Number}</strong> - <em>Найдено по: {material.MatchedKeyword}</em></p>");
+                        messageBuilder.AppendLine($"<p>{material.Description}</p>");
+                        if (!string.IsNullOrEmpty(material.Context))
+                        {
+                            messageBuilder.AppendLine($"<p><strong>Контекст:</strong><br/>{material.Context}</p>");
+                        }
+                        messageBuilder.AppendLine($"</div>");
+                    }
+                }
 
                 if (AnalysisResult != null && AnalysisResult.HasBadWords)
+                {
+                    hasViolations = true;
                     messageBuilder.AppendLine($"<p style='color:orange'>⚠️ Нецензурные слова: {AnalysisResult.TotalBadWordsCount}</p>");
+                }
 
                 if (GoogleFormsResult != null && GoogleFormsResult.HasGoogleForms)
+                {
+                    hasViolations = true;
                     messageBuilder.AppendLine($"<p style='color:orange'>⚠️ Google Forms: {GoogleFormsResult.FormUrls?.Count ?? 0}</p>");
+                }
 
                 if (ConsentResult != null && !ConsentResult.IsCompliant)
-                    messageBuilder.AppendLine($"<p style='color:red'>⚠️ Нет согласия на обработку ПД</p>");
-
-                if (!((ExtremistCheckResult?.HasExtremistMaterials == true) ||
-                      (AnalysisResult?.HasBadWords == true) ||
-                      (GoogleFormsResult?.HasGoogleForms == true) ||
-                      (ConsentResult?.IsCompliant == false)))
                 {
-                    messageBuilder.AppendLine("<p style='color:green'>✅ Нарушений не обнаружено.</p>");
+                    hasViolations = true;
+                    messageBuilder.AppendLine($"<p style='color:red'>⚠️ Нет согласия на обработку ПД</p>");
+                }
+
+                if (!hasViolations)
+                {
+                    messageBuilder.AppendLine("<p style='color:green; font-size:1.2em'>✅ Нарушений не обнаружено.</p>");
                 }
 
                 await _emailService.SendEmailAsync("fullstack_web_developer@mail.ru", subject, messageBuilder.ToString());
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"Ошибка отправки email: {ex.Message}");
+                _logger.LogError(ex, "Ошибка отправки email для сайта {SiteUrl}", SiteUrl);
             }
         }
     }

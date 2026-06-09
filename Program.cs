@@ -29,6 +29,7 @@ internal class Program
         builder.Services.AddScoped<PersonalDataConsentService>();
         builder.Services.AddHttpClient();
         builder.Services.AddHostedService<ExtremistMaterialUpdateService>();
+        builder.Services.AddScoped<ExtremistMaterialsParser>();
         builder.Services.AddScoped<ExtremistMaterialChecker>();
         builder.Services.AddScoped<JobFactory>();
         builder.Services.AddScoped<DataJob>();

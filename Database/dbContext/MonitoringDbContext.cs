@@ -1,5 +1,5 @@
 ﻿using Microsoft.EntityFrameworkCore;
-using MonitoringServiceCore.Database.ExtremistMaterialPackage;
+using MonitoringServiceCore.Database.ExtremistMaterials;
 using MonitoringServiceCore.Database.MonitoringPortalResources;
 using MonitoringServiceCore.Database.Roles;
 using MonitoringServiceCore.Database.SiteAnalysisNamespace;
@@ -46,14 +46,20 @@ namespace MonitoringServiceCore.Database.dbContext
             modelbuilder.Entity<ExtremistMaterial>(entity =>
             {
                 entity.HasKey(e => e.Id);
-                entity.Property(e => e.Number).HasMaxLength(50);
+                entity.Property(e => e.Number);
                 entity.Property(e => e.Description).HasMaxLength(1000);
             });
-            modelbuilder.Entity<MonitoringResource>(entity =>
+            modelbuilder.Entity<FoundMaterial>(entity =>
             {
                 entity.HasKey(e => e.Id);
-                entity.Property(e => e.Name).HasMaxLength(100);
-                entity.Property(e => e.Url).HasMaxLength(300);
+                entity.HasOne(f => f.CheckResult)
+                 .WithMany(r => r.FoundMaterials)
+                 .HasForeignKey(f => f.CheckResultId)
+                 .OnDelete(DeleteBehavior.Cascade);
+            });
+            modelbuilder.Entity<ExtremistCheckResult>(entity =>
+            {
+                entity.HasKey(e => e.Id);
             });
 
         }
@@ -61,6 +67,9 @@ namespace MonitoringServiceCore.Database.dbContext
         public DbSet<Role> Roles { get; set; }
         public DbSet<SiteAnalysis> SiteAnalyses { get; set; }
         public DbSet<ExtremistMaterial> ExtremistMaterials { get; set; }
+        public DbSet<FoundMaterial> FoundMaterials { get; set; }
+        public DbSet<ExtremistCheckResult> ExtremistCheckResults { get; set; }
+
         public DbSet<MonitoringResource> Resources { get; set; }
 
 
