@@ -155,10 +155,16 @@ namespace MonitoringServiceCore.Pages
 
                         await _dbContext.ExtremistCheckResults.AddAsync(savedResult);
 
-                        if (displayResult.FoundMaterials.Any())
+                        for(int i= 0;i< displayResult.FoundMaterials.Count; i++)
                         {
-                            await _dbContext.FoundMaterials.AddRangeAsync(displayResult.FoundMaterials);
+                            if (displayResult.FoundMaterials.Any())
+                            {
+                                FoundMaterial fm = displayResult.FoundMaterials[i];
+                                await _dbContext.FoundMaterials.AddAsync(fm);
+                                ;
+                            }
                         }
+                       
 
                         await _dbContext.SaveChangesAsync();
                         _logger.LogInformation("Результаты проверки сохранены в БД для URL {SiteUrl}", SiteUrl);

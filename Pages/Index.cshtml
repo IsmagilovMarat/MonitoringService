@@ -475,9 +475,85 @@
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script>
-        document.getElementById('analyzeBtn')?.addEventListener('click', function(e) {
-            this.disabled = true;
-            this.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Анализ...';
+     
+        // Функционал раскрытия/скрытия проверок
+        document.querySelectorAll('.check-item').forEach(item => {
+            const header = item.querySelector('.check-header');
+
+            header.addEventListener('click', (e) => {
+                // Не закрываем при клике на статус
+                if (e.target.closest('.check-status')) return;
+
+                // Закрываем все другие открытые проверки
+                document.querySelectorAll('.check-item').forEach(otherItem => {
+                    if (otherItem !== item && otherItem.classList.contains('active')) {
+                        otherItem.classList.remove('active');
+                    }
+                });
+
+                // Переключаем текущую проверку
+                item.classList.toggle('active');
+            });
+        });
+
+        // Анимация и блокировка кнопки при отправке
+        const form = document.getElementById('analyzeForm');
+        if (form) {
+            form.addEventListener('submit', function(e) {
+                const btn = document.getElementById('analyzeBtn');
+                if (btn) {
+                    btn.disabled = true;
+                    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Анализ...';
+                }
+            });
+        }
+
+        // Если есть результаты, автоматически раскрываем проверки с нарушениями
+        document.addEventListener('DOMContentLoaded', function() {
+            // Плавное появление элементов
+            const elements = document.querySelectorAll('.card, .check-item');
+            elements.forEach((el, index) => {
+                el.style.opacity = '0';
+                el.style.transform = 'translateY(20px)';
+                setTimeout(() => {
+                    el.style.transition = 'opacity 0.5s ease, transform 0.5s ease';
+                    el.style.opacity = '1';
+                    el.style.transform = 'translateY(0)';
+                }, index * 100);
+            });
+
+            // Автоматически раскрываем проверки с нарушениями
+            @if (Model.HasResults)
+            {
+                        if (Model.AnalysisResult!.HasBadWords)
+                        {
+                                    <text>
+                                    const badWordsCheck = document.querySelector('[data-check="badwords"]');
+                                    if (badWordsCheck) badWordsCheck.classList.add('active');
+                                    </text>
+                        }
+                        if (Model.AnalysisResult!.HasGoogleForms)
+                        {
+                                    <text>
+                                    const googleFormsCheck = document.querySelector('[data-check="googleforms"]');
+                                    if (googleFormsCheck) googleFormsCheck.classList.add('active');
+                                    </text>
+                        }
+                        if (Model.AnalysisResult!.HasExtimistMaterial)
+                        {
+                                    <text>
+                                    const extremismCheck = document.querySelector('[data-check="extremism"]');
+                                    if (extremismCheck) extremismCheck.classList.add('active');
+                                    </text>
+                        }
+                        if (!Model.AnalysisResult!.HasPrivacyPolicy || !Model.AnalysisResult!.HasConsent)
+                        {
+                                    <text>
+                                    const personalDataCheck = document.querySelector('[data-check="personaldata"]');
+                                    if (personalDataCheck) personalDataCheck.classList.add('active');
+                                    </text>
+                        }
+            }
         });
     </script>
 </body>

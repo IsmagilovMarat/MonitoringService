@@ -25,7 +25,8 @@ namespace MonitoringServiceCore.Services
             var result = new ExtremistCheckResult
             {
                 Url = url,
-                CheckTime = DateTime.UtcNow
+                CheckTime = DateTime.UtcNow,
+                FoundMaterials = new List<FoundMaterial>()
             };
 
             try
