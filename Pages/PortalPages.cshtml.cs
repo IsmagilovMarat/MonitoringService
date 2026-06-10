@@ -164,11 +164,11 @@ namespace MonitoringServiceCore.Pages
                     result.BadWordsList = analysisResult.BadWordsFound;
 
                     // Проверка Google Forms
-                    var googleFormsResult = await _googleFormsDetector.DetectGoogleFormsAsync(resource.Url);
-                    result.HasGoogleForms = googleFormsResult.HasGoogleForms;
-                    result.GoogleFormsCount = googleFormsResult.FormUrls?.Count ?? 0;
-                    result.GoogleFormsList = googleFormsResult.FormUrls;
-                    result.IsPotentiallyMalicious = googleFormsResult.IsPotentiallyMalicious;
+                    //var googleFormsResult = await _googleFormsDetector.DetectGoogleFormsAsync(resource.Url,resource.Url);
+                    //result.HasGoogleForms = googleFormsResult.HasGoogleForms;
+                    //result.GoogleFormsCount = googleFormsResult.FormUrls?.Count ?? 0;
+                    //result.GoogleFormsList = googleFormsResult.FormUrls;
+                    //result.IsPotentiallyMalicious = googleFormsResult.IsPotentiallyMalicious;
 
                     // Проверка экстремистских материалов
                     var extremistResult = await _extremistChecker.CheckContentAsync(htmlContent, resource.Url);

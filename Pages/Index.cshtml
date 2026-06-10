@@ -230,6 +230,89 @@
             font-size: 0.9rem;
             margin-top: 10px;
         }
+
+        .google-forms-card {
+            background: white;
+            border-radius: 16px;
+            overflow: hidden;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+            margin-top: 15px;
+            border: 1px solid rgba(0, 0, 0, 0.05);
+            transition: all 0.3s ease;
+        }
+
+            .google-forms-card:hover {
+                transform: translateY(-3px);
+                box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+            }
+
+            .google-forms-card.safe {
+                border-left: 4px solid #28a745;
+            }
+
+        .google-forms-header {
+            background: linear-gradient(135deg, #ff9800 0%, #f57c00 100%);
+            padding: 15px 20px;
+            color: white;
+        }
+
+            .google-forms-header.safe-header {
+                background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+            }
+
+        .google-forms-body {
+            padding: 20px;
+        }
+
+        .info-row {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 8px 0;
+            border-bottom: 1px solid #f0f0f0;
+        }
+
+            .info-row:last-child {
+                border-bottom: none;
+            }
+
+        .info-badge {
+            background: #f8f9fa;
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            color: #495057;
+        }
+
+        .malicious-warning {
+            background: linear-gradient(135deg, #fff3cd 0%, #ffe69c 100%);
+            border-left: 4px solid #dc3545;
+            padding: 15px;
+            border-radius: 12px;
+            margin-top: 15px;
+        }
+
+        .malicious-list {
+            list-style: none;
+            padding-left: 0;
+            margin-bottom: 0;
+        }
+
+            .malicious-list li {
+                padding: 5px 0;
+                color: #856404;
+                font-size: 0.9rem;
+            }
+
+                .malicious-list li i {
+                    margin-right: 8px;
+                    color: #dc3545;
+                }
+
+        .detection-info hr {
+            margin: 15px 0;
+            border-color: #e9ecef;
+        }
     </style>
 </head>
 <body>
@@ -337,8 +420,23 @@
                                 {
                                     <li class="list-group-item d-flex justify-content-between align-items-center">
                                         Google Forms
-                                        <span class="badge @(Model.GoogleFormsResult.HasGoogleForms ? "bg-warning" : "bg-success") rounded-pill">
-                                            @(Model.GoogleFormsResult.HasGoogleForms ? $"Найдено: {Model.GoogleFormsResult.FormUrls.Count}" : "Не найдены")
+                                        <span class="badge @(Model.GoogleFormsResult.HasGoogleForms ?
+                                                                                  (Model.GoogleFormsResult.IsPotentiallyMalicious ? "bg-danger" : "bg-warning") : "bg-success") rounded-pill">
+                                    @if (Model.GoogleFormsResult.HasGoogleForms)
+                                            {
+                                                if (Model.GoogleFormsResult.IsPotentiallyMalicious)
+                                                {
+                                                    @:⚠️ ВРЕДОНОСНЫЕ
+                                                }
+                                                else
+                                                {
+                                                    @:Обнаружены
+                                                }
+                                            }
+                                            else
+                                            {
+                                                @:Не найдены
+                                            }
                                         </span>
                                     </li>
                                 }
@@ -421,18 +519,13 @@
                     }
 
                     <!-- Детали найденных Google Forms -->
-                    @if (Model.GoogleFormsResult != null && Model.GoogleFormsResult.HasGoogleForms && Model.GoogleFormsResult.FormUrls.Any())
+                    @if (Model.GoogleFormsResult != null && Model.GoogleFormsResult.HasGoogleForms)
                     {
                         <div class="mt-4">
                             <h5 class="text-warning">
                                 <i class="fab fa-google"></i> Найденные Google Forms:
                             </h5>
-                            <ul class="mt-2">
-                                @foreach (var form in Model.GoogleFormsResult.FormUrls.Take(10))
-                                {
-                                    <li><a href="@form" target="_blank">@form</a></li>
-                                }
-                            </ul>
+                           
                             @if (Model.GoogleFormsResult.IsPotentiallyMalicious)
                             {
                                 <div class="alert alert-danger mt-2">
@@ -523,37 +616,7 @@
             });
 
             // Автоматически раскрываем проверки с нарушениями
-            @if (Model.HasResults)
-            {
-                        if (Model.AnalysisResult!.HasBadWords)
-                        {
-                                    <text>
-                                    const badWordsCheck = document.querySelector('[data-check="badwords"]');
-                                    if (badWordsCheck) badWordsCheck.classList.add('active');
-                                    </text>
-                        }
-                        if (Model.AnalysisResult!.HasGoogleForms)
-                        {
-                                    <text>
-                                    const googleFormsCheck = document.querySelector('[data-check="googleforms"]');
-                                    if (googleFormsCheck) googleFormsCheck.classList.add('active');
-                                    </text>
-                        }
-                        if (Model.AnalysisResult!.HasExtimistMaterial)
-                        {
-                                    <text>
-                                    const extremismCheck = document.querySelector('[data-check="extremism"]');
-                                    if (extremismCheck) extremismCheck.classList.add('active');
-                                    </text>
-                        }
-                        if (!Model.AnalysisResult!.HasPrivacyPolicy || !Model.AnalysisResult!.HasConsent)
-                        {
-                                    <text>
-                                    const personalDataCheck = document.querySelector('[data-check="personaldata"]');
-                                    if (personalDataCheck) personalDataCheck.classList.add('active');
-                                    </text>
-                        }
-            }
+           
         });
     </script>
 </body>

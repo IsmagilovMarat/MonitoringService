@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using MonitoringServiceCore.Database.dbContext;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
@@ -12,9 +13,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace MonitoringServiceCore.Migrations
 {
     [DbContext(typeof(MonitoringDbContext))]
-    partial class MonitoringDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260610164417_googleform")]
+    partial class googleform
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -137,6 +140,14 @@ namespace MonitoringServiceCore.Migrations
                     b.Property<string>("ErrorMessage")
                         .IsRequired()
                         .HasColumnType("text");
+
+                    b.PrimitiveCollection<List<string>>("FormTypes")
+                        .IsRequired()
+                        .HasColumnType("text[]");
+
+                    b.PrimitiveCollection<List<string>>("FormUrls")
+                        .IsRequired()
+                        .HasColumnType("text[]");
 
                     b.Property<bool>("HasGoogleForms")
                         .HasColumnType("boolean");

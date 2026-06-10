@@ -95,13 +95,10 @@ namespace MonitoringServiceCore.Pages
 
                 _logger.LogInformation("Начинаем анализ сайта: {SiteUrl}", SiteUrl);
 
-                // Загружаем HTML
                 var htmlContent = await _siteDataDownloader.DownloadHtmlAsync(SiteUrl!);
 
-                // 1. Проверка экстремистских материалов
                 var checkResult = await _extremistChecker.CheckContentWithContextAsync(htmlContent, SiteUrl!);
 
-                // Создаем результат для отображения
                 var displayResult = new ExtremistCheckResult
                 {
                     Id = Guid.NewGuid(),
@@ -112,7 +109,6 @@ namespace MonitoringServiceCore.Pages
                     FoundMaterials = new List<FoundMaterial>()
                 };
 
-                // Заполняем найденные материалы
                 if (checkResult.HasExtremistMaterials && checkResult.FoundMaterials.Any())
                 {
                     foreach (var material in checkResult.FoundMaterials)
@@ -131,7 +127,6 @@ namespace MonitoringServiceCore.Pages
                         });
                     }
 
-                    // Логируем найденные материалы
                     foreach (var material in displayResult.FoundMaterials)
                     {
                         _logger.LogWarning("Обнаружен экстремистский материал #{Number}: {Description} (совпадение: {Keyword})",
@@ -139,7 +134,6 @@ namespace MonitoringServiceCore.Pages
                     }
                 }
 
-                // Сохраняем в БД асинхронно (не блокируем отображение)
                 _ = Task.Run(async () =>
                 {
                     try
@@ -177,16 +171,12 @@ namespace MonitoringServiceCore.Pages
 
                 ExtremistCheckResult = displayResult;
 
-                // 2. Проверка нецензурной лексики
                 AnalysisResult = _badWordAnalyzer.AnalyzeContent(htmlContent);
 
-                // 3. Проверка Google Forms
-                GoogleFormsResult = await _googleFormsDetector.DetectGoogleFormsAsync(SiteUrl!);
+                GoogleFormsResult = await _googleFormsDetector.DetectGoogleFormsFromHtmlAsync(htmlContent, SiteUrl!);
 
-                // 4. Проверка согласия на обработку ПД
                 ConsentResult = await _consentService.CheckConsentAsync(SiteUrl!);
 
-                // Обновляем информацию о словаре
                 DictionaryInfo = _badWordAnalyzer.GetDictionaryInfo();
                 Users = _dbContext.Users.ToList();
 
@@ -204,7 +194,6 @@ namespace MonitoringServiceCore.Pages
 
                 if (GoogleFormsResult != null && GoogleFormsResult.HasGoogleForms)
                 {
-                    messages.Add($"Обнаружено {GoogleFormsResult.FormUrls?.Count ?? 0} Google Form(s)");
                     if (GoogleFormsResult.IsPotentiallyMalicious)
                     {
                         messages.Add("⚠️ Потенциально вредоносные формы!");
@@ -225,7 +214,6 @@ namespace MonitoringServiceCore.Pages
                     TempData["SuccessMessage"] = "Анализ завершен! Нарушений не обнаружено.";
                 }
 
-                // Отправка email уведомления
                 await SendEmailNotificationAsync();
             }
             catch (Exception ex)
@@ -270,12 +258,6 @@ namespace MonitoringServiceCore.Pages
                 {
                     hasViolations = true;
                     messageBuilder.AppendLine($"<p style='color:orange'>⚠️ Нецензурные слова: {AnalysisResult.TotalBadWordsCount}</p>");
-                }
-
-                if (GoogleFormsResult != null && GoogleFormsResult.HasGoogleForms)
-                {
-                    hasViolations = true;
-                    messageBuilder.AppendLine($"<p style='color:orange'>⚠️ Google Forms: {GoogleFormsResult.FormUrls?.Count ?? 0}</p>");
                 }
 
                 if (ConsentResult != null && !ConsentResult.IsCompliant)
