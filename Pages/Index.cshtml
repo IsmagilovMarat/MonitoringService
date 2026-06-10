@@ -419,24 +419,9 @@
                                 @if (Model.GoogleFormsResult != null)
                                 {
                                     <li class="list-group-item d-flex justify-content-between align-items-center">
-                                        Google Forms
-                                        <span class="badge @(Model.GoogleFormsResult.HasGoogleForms ?
-                                                                                  (Model.GoogleFormsResult.IsPotentiallyMalicious ? "bg-danger" : "bg-warning") : "bg-success") rounded-pill">
-                                    @if (Model.GoogleFormsResult.HasGoogleForms)
-                                            {
-                                                if (Model.GoogleFormsResult.IsPotentiallyMalicious)
-                                                {
-                                                    @:⚠️ ВРЕДОНОСНЫЕ
-                                                }
-                                                else
-                                                {
-                                                    @:Обнаружены
-                                                }
-                                            }
-                                            else
-                                            {
-                                                @:Не найдены
-                                            }
+                                        Согласие на обработку ПД
+                                        <span class="badge @(Model.GoogleFormsResult.HasGoogleForms ? "bg-success" : "bg-warning") rounded-pill">
+                                            @(Model.GoogleFormsResult.HasGoogleForms ? "Есть Google формы" : "Нет Google форм")
                                         </span>
                                     </li>
                                 }
@@ -568,55 +553,33 @@
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script>
-     
-        // Функционал раскрытия/скрытия проверок
-        document.querySelectorAll('.check-item').forEach(item => {
-            const header = item.querySelector('.check-header');
+        // Блокировка кнопки при отправке формы
+        const analyzeForm = document.getElementById('analyzeForm');
+        const analyzeBtn = document.getElementById('analyzeBtn');
 
-            header.addEventListener('click', (e) => {
-                // Не закрываем при клике на статус
-                if (e.target.closest('.check-status')) return;
-
-                // Закрываем все другие открытые проверки
-                document.querySelectorAll('.check-item').forEach(otherItem => {
-                    if (otherItem !== item && otherItem.classList.contains('active')) {
-                        otherItem.classList.remove('active');
-                    }
-                });
-
-                // Переключаем текущую проверку
-                item.classList.toggle('active');
-            });
-        });
-
-        // Анимация и блокировка кнопки при отправке
-        const form = document.getElementById('analyzeForm');
-        if (form) {
-            form.addEventListener('submit', function(e) {
-                const btn = document.getElementById('analyzeBtn');
-                if (btn) {
-                    btn.disabled = true;
-                    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Анализ...';
+        if (analyzeForm) {
+            analyzeForm.addEventListener('submit', function() {
+                if (analyzeBtn) {
+                    analyzeBtn.disabled = true;
+                    analyzeBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Анализ...';
                 }
             });
         }
 
-        // Если есть результаты, автоматически раскрываем проверки с нарушениями
+        // Плавное появление карточек
         document.addEventListener('DOMContentLoaded', function() {
-            // Плавное появление элементов
-            const elements = document.querySelectorAll('.card, .check-item');
-            elements.forEach((el, index) => {
-                el.style.opacity = '0';
-                el.style.transform = 'translateY(20px)';
+            const cards = document.querySelectorAll('.card');
+            cards.forEach((card, index) => {
+                card.style.opacity = '0';
+                card.style.transform = 'translateY(20px)';
                 setTimeout(() => {
-                    el.style.transition = 'opacity 0.5s ease, transform 0.5s ease';
-                    el.style.opacity = '1';
-                    el.style.transform = 'translateY(0)';
+                    card.style.transition = 'opacity 0.5s ease, transform 0.5s ease';
+                    card.style.opacity = '1';
+                    card.style.transform = 'translateY(0)';
                 }, index * 100);
             });
 
-            // Автоматически раскрываем проверки с нарушениями
-           
+            console.log('Страница загружена, форма готова');
         });
     </script>
 </body>

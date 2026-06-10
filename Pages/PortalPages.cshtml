@@ -417,7 +417,6 @@
         <div class="card">
             <div class="card-header">
                 <i class="fas fa-plus-circle"></i> Добавить новый ресурс
-                <span class="government-badge"><i class="fas fa-building"></i> Government</span>
             </div>
             <div class="card-body">
                 <form method="post" asp-page-handler="Add">
@@ -437,9 +436,6 @@
                             <span asp-validation-for="NewResource.Url" class="text-danger"></span>
                         </div>
                     </div>
-                    <div class="alert alert-info mb-3">
-                        <i class="fas fa-info-circle"></i> <strong>Примечание:</strong> Все ресурсы автоматически получают тип портала <strong>"Government"</strong>
-                    </div>
                     <button type="submit" class="btn btn-primary">
                         <i class="fas fa-save"></i> Добавить ресурс
                     </button>
@@ -450,7 +446,7 @@
         <!-- Список ресурсов -->
         <div class="card">
             <div class="card-header">
-                <i class="fas fa-list"></i> Список ресурсов (Government)
+                <i class="fas fa-list"></i> Список ресурсов 
             </div>
             <div class="card-body p-0">
                 <div class="table-responsive">
@@ -541,15 +537,8 @@
                                                         else
                                                         {
                                                             <div class="row">
-                                                                <!-- Общая оценка -->
-                                                                <div class="col-md-3 text-center mb-3">
-                                                                    <div class="score-circle @(checkResult.OverallScore >= 70 ? "score-high" : (checkResult.OverallScore >= 40 ? "score-medium" : "score-low")) mx-auto">
-                                                                        @checkResult.OverallScore
-                                                                    </div>
-                                                                    <small class="text-muted">Общая оценка</small>
-                                                                </div>
                                                                 
-                                                                <!-- Статистика -->
+                                                                
                                                                 <div class="col-md-9">
                                                                     <div class="row">
                                                                         <div class="col-md-3 mb-2">
@@ -558,8 +547,8 @@
                                                                             </span>
                                                                         </div>
                                                                         <div class="col-md-3 mb-2">
-                                                                            <span class="badge @(checkResult.HasGoogleForms ? "badge-warning" : "badge-success")">
-                                                                                <i class="fab fa-google"></i> Google Forms: @checkResult.GoogleFormsCount
+                                                                            <span class="badge @(checkResult.HasExtremistMaterials ? "badge-danger" : "badge-success")">
+                                                                                <i class="fas fa-gavel"></i> Наличие Google форм: @(checkResult.HasGoogleForms ?"Есть":"Нет")
                                                                             </span>
                                                                         </div>
                                                                         <div class="col-md-3 mb-2">
@@ -589,23 +578,7 @@
                                                                     </div>
                                                                 </div>
                                                             }
-                                                            
-                                                            @if (checkResult.HasGoogleForms && checkResult.GoogleFormsList != null && checkResult.GoogleFormsList.Any())
-                                                            {
-                                                                <div class="mt-3">
-                                                                    <strong><i class="fab fa-google"></i> Найденные Google Forms:</strong>
-                                                                    <ul class="mt-1">
-                                                                        @foreach (var form in checkResult.GoogleFormsList.Take(5))
-                                                                        {
-                                                                            <li><small>@form</small></li>
-                                                                        }
-                                                                    </ul>
-                                                                    @if (checkResult.IsPotentiallyMalicious)
-                                                                    {
-                                                                        <div class="alert alert-warning mt-2">⚠️ Обнаружены потенциально вредоносные формы!</div>
-                                                                    }
-                                                                </div>
-                                                            }
+                                                           
                                                             
                                                             @if (checkResult.HasExtremistMaterials && checkResult.ExtremistList != null && checkResult.ExtremistList.Any())
                                                             {

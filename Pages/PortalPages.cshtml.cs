@@ -163,12 +163,9 @@ namespace MonitoringServiceCore.Pages
                     result.BadWordsCount = analysisResult.TotalBadWordsCount;
                     result.BadWordsList = analysisResult.BadWordsFound;
 
-                    // Проверка Google Forms
-                    //var googleFormsResult = await _googleFormsDetector.DetectGoogleFormsAsync(resource.Url,resource.Url);
-                    //result.HasGoogleForms = googleFormsResult.HasGoogleForms;
-                    //result.GoogleFormsCount = googleFormsResult.FormUrls?.Count ?? 0;
-                    //result.GoogleFormsList = googleFormsResult.FormUrls;
-                    //result.IsPotentiallyMalicious = googleFormsResult.IsPotentiallyMalicious;
+                    var googleFormsResult = await _googleFormsDetector.DetectGoogleFormsFromHtmlAsync(htmlContent,resource.Url);
+                    result.HasGoogleForms = googleFormsResult.HasGoogleForms;
+                    result.IsPotentiallyMalicious = googleFormsResult.IsPotentiallyMalicious;
 
                     // Проверка экстремистских материалов
                     var extremistResult = await _extremistChecker.CheckContentAsync(htmlContent, resource.Url);
@@ -179,13 +176,10 @@ namespace MonitoringServiceCore.Pages
                     var consentResult = await _consentService.CheckConsentAsync(resource.Url);
                     result.HasConsent = consentResult?.IsCompliant ?? false;
 
-                    // Расчет общей оценки
-                    result.OverallScore = CalculateOverallScore(result);
 
                     // Сохраняем результат в БД
                     resource.CheckResults = JsonSerializer.Serialize(result);
                     resource.LastCheckDate = DateTime.Now;
-                    await _dbContext.SaveChangesAsync();
 
                     SuccessMessage = $"Проверка ресурса \"{resource.Name}\" завершена!";
                 }
@@ -228,17 +222,6 @@ namespace MonitoringServiceCore.Pages
             DeserializeAllCheckResults();
             return Page();
         }
-
-        private int CalculateOverallScore(ResourceCheckResult result)
-        {
-            int score = 100;
-            if (result.HasBadWords) score -= 30;
-            if (result.HasExtremistMaterials) score -= 50;
-            if (result.HasGoogleForms) score -= 20;
-            if (!result.HasConsent) score -= 20;
-            return Math.Max(0, score);
-        }
-
         private void LoadResources()
         {
             Resources = _dbContext.Resources
@@ -299,8 +282,6 @@ namespace MonitoringServiceCore.Pages
         public Dictionary<string, int>? BadWordsList { get; set; }
 
         public bool HasGoogleForms { get; set; }
-        public int GoogleFormsCount { get; set; }
-        public List<string>? GoogleFormsList { get; set; }
         public bool IsPotentiallyMalicious { get; set; }
 
         public bool HasExtremistMaterials { get; set; }
@@ -308,7 +289,6 @@ namespace MonitoringServiceCore.Pages
         public List<string>? ExtremistList { get; set; }
 
         public bool HasConsent { get; set; }
-        public int OverallScore { get; set; }
 
         public bool HasViolations => HasBadWords || HasGoogleForms || HasExtremistMaterials || !HasConsent;
     }
