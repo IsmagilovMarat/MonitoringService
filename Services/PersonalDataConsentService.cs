@@ -1,4 +1,4 @@
-﻿using MonitoringServiceCore.Database;
+﻿using MonitoringServiceCore.Database.ConsentCheckResults;
 using System.Text.RegularExpressions;
 
 namespace MonitoringServiceCore.Services
@@ -23,7 +23,6 @@ namespace MonitoringServiceCore.Services
             "privacy policy"
         };
 
-        // Регулярные выражения для поиска чекбоксов и кнопок
         private readonly Regex _checkboxRegex = new Regex(
             @"<input[^>]*type=[""']checkbox[""'][^>]*>",
             RegexOptions.IgnoreCase | RegexOptions.Compiled);
@@ -40,10 +39,6 @@ namespace MonitoringServiceCore.Services
         {
             _downloader = downloader ?? throw new ArgumentNullException(nameof(downloader));
         }
-
-        /// <summary>
-        /// Проверяет HTML-страницу на наличие элементов согласия на обработку ПД
-        /// </summary>
         public async Task<ConsentCheckResult> CheckConsentAsync(string url)
         {
             var result = new ConsentCheckResult
@@ -58,7 +53,6 @@ namespace MonitoringServiceCore.Services
                 string html = await _downloader.DownloadHtmlAsync(url);
                 string lowerHtml = html.ToLower();
 
-                // 1. Поиск ключевых слов
                 foreach (var keyword in _consentKeywords)
                 {
                     if (lowerHtml.Contains(keyword.ToLower()))
@@ -68,17 +62,13 @@ namespace MonitoringServiceCore.Services
                 }
                 result.HasConsentMechanism = result.FoundKeywords.Any();
 
-                // 2. Поиск чекбокса согласия
                 result.HasCheckboxConsent = _checkboxRegex.IsMatch(html) &&
                     (lowerHtml.Contains("согласие") || lowerHtml.Contains("consent") || lowerHtml.Contains("agree"));
 
-                // 3. Поиск кнопки принятия
                 result.HasButtonConsent = _consentButtonRegex.IsMatch(html);
 
-                // 4. Поиск ссылки на политику конфиденциальности
                 result.HasPrivacyPolicyLink = _privacyLinkRegex.IsMatch(html);
 
-                // 5. Извлечение текста около первого найденного элемента (для отчёта)
                 if (result.HasConsentMechanism)
                 {
                     var firstKeyword = result.FoundKeywords.FirstOrDefault();
@@ -97,21 +87,6 @@ namespace MonitoringServiceCore.Services
             }
 
             return result;
-        }
-
-        /// <summary>
-        /// Проверяет несколько URL
-        /// </summary>
-        public async Task<List<ConsentCheckResult>> CheckMultipleAsync(IEnumerable<string> urls)
-        {
-            var results = new List<ConsentCheckResult>();
-            foreach (var url in urls)
-            {
-                var res = await CheckConsentAsync(url);
-                results.Add(res);
-                await Task.Delay(100); // задержка между запросами
-            }
-            return results;
         }
     }
 }

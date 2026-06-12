@@ -299,7 +299,6 @@
     </div>
 
     <script>
-        // Функция для показа/скрытия пароля
         function togglePassword() {
             const passwordInput = document.getElementById('password');
             const toggleButton = document.querySelector('.password-toggle i');
@@ -315,24 +314,20 @@
             }
         }
 
-        // Функция для показа информации
         function showInfo() {
             alert('Для входа используйте email и пароль, указанные при регистрации');
         }
 
-        // Валидация email
         function isValidEmail(email) {
          
             return emailRegex.test(email);
         }
 
-        // Обработка отправки формы
         document.getElementById('loginForm').addEventListener('submit', function(e) {
             const loginButton = document.getElementById('loginButton');
             const loginText = document.getElementById('loginText');
             const loadingSpinner = document.getElementById('loadingSpinner');
             
-            // Валидация email
             const email = document.getElementById('email').value;
             if (!email) {
                 e.preventDefault();
@@ -345,7 +340,6 @@
                 return false;
             }
 
-            // Валидация пароля
             const password = document.getElementById('password').value;
             if (!password) {
                 e.preventDefault();
@@ -363,11 +357,9 @@
             loginButton.disabled = true;
         });
 
-        // Автофокус
         document.addEventListener('DOMContentLoaded', function() {
             document.getElementById('email').focus();
 
-            // Плавное появление формы
             const container = document.querySelector('.login-container');
             if (container) {
                 container.style.opacity = '0';

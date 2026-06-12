@@ -22,7 +22,6 @@ namespace MonitoringServiceCore.Email.Jobs
             }
 
         }
-
         public void ReturnJob(IJob job)
         {
         }

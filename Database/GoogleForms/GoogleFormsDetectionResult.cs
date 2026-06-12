@@ -14,6 +14,5 @@ namespace MonitoringServiceCore.Database.GoogleForms
         public string ErrorMessage { get; set; }
         public bool HasErrors => !string.IsNullOrEmpty(ErrorMessage);
            
-        
     }
 }

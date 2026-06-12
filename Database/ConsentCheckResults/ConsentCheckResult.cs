@@ -1,7 +1,8 @@
-﻿namespace MonitoringServiceCore.Database
+﻿namespace MonitoringServiceCore.Database.ConsentCheckResults
 {
     public class ConsentCheckResult
     {
+        public Guid Id { get; set; }
         public string Url { get; set; }
         public DateTime CheckTime { get; set; }
         public bool HasConsentMechanism { get; set; }      

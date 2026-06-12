@@ -2,8 +2,8 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.EntityFrameworkCore;
-using MonitoringServiceCore.Database;
 using MonitoringServiceCore.Database.BadWord;
+using MonitoringServiceCore.Database.ConsentCheckResults;
 using MonitoringServiceCore.Database.dbContext;
 using MonitoringServiceCore.Database.ExtremistMaterials;
 using MonitoringServiceCore.Database.GoogleForms;
@@ -24,7 +24,6 @@ namespace MonitoringServiceCore.Pages
         private readonly PersonalDataConsentService _consentService;
         private readonly ExtremistMaterialChecker _extremistChecker;
         private readonly IEmailService _emailService;
-        private readonly ILogger<IndexModel> _logger;
 
         public ExtremistCheckResult? ExtremistCheckResult { get; set; }
         public List<User> Users { get; set; } = new List<User>();
@@ -56,7 +55,6 @@ namespace MonitoringServiceCore.Pages
             _googleFormsDetector = googleFormsDetector;
             _consentService = consentService;
             _extremistChecker = extremistChecker;
-            _logger = logger;
         }
 
         public void OnGet()
@@ -72,7 +70,6 @@ namespace MonitoringServiceCore.Pages
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Ошибка при загрузке страницы");
                 Users = new List<User>();
             }
         }
@@ -88,8 +85,6 @@ namespace MonitoringServiceCore.Pages
             try
             {
                 HasResults = true;
-
-                _logger.LogInformation("Начинаем анализ сайта: {SiteUrl}", SiteUrl);
 
                 var htmlContent = await _siteDataDownloader.DownloadHtmlAsync(SiteUrl!);
 
@@ -122,12 +117,6 @@ namespace MonitoringServiceCore.Pages
                             CheckResultId = displayResult.Id
                         });
                     }
-
-                    foreach (var material in displayResult.FoundMaterials)
-                    {
-                        _logger.LogWarning("Обнаружен экстремистский материал #{Number}: {Description} (совпадение: {Keyword})",
-                            material.Number, material.Description, material.MatchedKeyword);
-                    }
                 }
 
                 _ = Task.Run(async () =>
@@ -157,11 +146,10 @@ namespace MonitoringServiceCore.Pages
                        
 
                         await _dbContext.SaveChangesAsync();
-                        _logger.LogInformation("Результаты проверки сохранены в БД для URL {SiteUrl}", SiteUrl);
                     }
                     catch (Exception ex)
                     {
-                        _logger.LogError(ex, "Ошибка при сохранении результатов в БД для URL {SiteUrl}", SiteUrl);
+                        throw ex;
                     }
                 });
 
@@ -213,7 +201,6 @@ namespace MonitoringServiceCore.Pages
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Ошибка при анализе сайта {SiteUrl}", SiteUrl);
                 ErrorMessage = $"Ошибка при анализе сайта: {ex.Message}";
             }
 
@@ -270,7 +257,7 @@ namespace MonitoringServiceCore.Pages
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Ошибка отправки email для сайта {SiteUrl}", SiteUrl);
+                throw ex;
             }
         }
     }

@@ -39,7 +39,6 @@ namespace MonitoringServiceCore.Pages
                 return Page();
             }
 
-            // Вход только по email
             var user = _authService.GetUserByEmail(Email!, Password);
 
             if (user == null)

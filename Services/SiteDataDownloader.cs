@@ -56,7 +56,6 @@ namespace MonitoringServiceCore.Services
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"Ошибка при сохранении файла {filePath}: {ex.Message}");
                 throw;
             }
         }

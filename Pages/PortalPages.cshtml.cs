@@ -42,7 +42,6 @@ namespace MonitoringServiceCore.Pages
         public string? SuccessMessage { get; set; }
         public string? ErrorMessage { get; set; }
 
-        // Хранилище десериализованных результатов проверки для текущей сессии
         public Dictionary<Guid, ResourceCheckResult> CheckResults { get; set; } = new();
 
         public void OnGet()
@@ -154,10 +153,8 @@ namespace MonitoringServiceCore.Pages
 
                 try
                 {
-                    // Скачиваем HTML
                     var htmlContent = await _siteDataDownloader.DownloadHtmlAsync(resource.Url);
 
-                    // Проверка нецензурной лексики
                     var analysisResult = _badWordAnalyzer.AnalyzeContent(htmlContent);
                     result.HasBadWords = analysisResult.HasBadWords;
                     result.BadWordsCount = analysisResult.TotalBadWordsCount;
@@ -167,17 +164,14 @@ namespace MonitoringServiceCore.Pages
                     result.HasGoogleForms = googleFormsResult.HasGoogleForms;
                     result.IsPotentiallyMalicious = googleFormsResult.IsPotentiallyMalicious;
 
-                    // Проверка экстремистских материалов
                     var extremistResult = await _extremistChecker.CheckContentAsync(htmlContent, resource.Url);
                     result.HasExtremistMaterials = extremistResult.HasExtremistMaterials;
                     result.ExtremistCount = extremistResult.FoundMaterials?.Count ?? 0;
 
-                    // Проверка согласия на обработку ПД
                     var consentResult = await _consentService.CheckConsentAsync(resource.Url);
                     result.HasConsent = consentResult?.IsCompliant ?? false;
 
 
-                    // Сохраняем результат в БД
                     resource.CheckResults = JsonSerializer.Serialize(result);
                     resource.LastCheckDate = DateTime.Now;
 
@@ -204,24 +198,6 @@ namespace MonitoringServiceCore.Pages
             return Page();
         }
 
-        public async Task<IActionResult> OnPostToggleResultAsync(Guid id)
-        {
-            var resource = await _dbContext.Resources.FindAsync(id);
-            if (resource != null && !string.IsNullOrEmpty(resource.CheckResults))
-            {
-                var result = JsonSerializer.Deserialize<ResourceCheckResult>(resource.CheckResults);
-                if (result != null)
-                {
-                    result.IsExpanded = !result.IsExpanded;
-                    resource.CheckResults = JsonSerializer.Serialize(result);
-                    await _dbContext.SaveChangesAsync();
-                }
-            }
-
-            LoadResources();
-            DeserializeAllCheckResults();
-            return Page();
-        }
         private void LoadResources()
         {
             Resources = _dbContext.Resources
@@ -275,8 +251,6 @@ namespace MonitoringServiceCore.Pages
         public DateTime CheckTime { get; set; }
         public bool IsExpanded { get; set; }
         public string? ErrorMessage { get; set; }
-
-        // Результаты проверок
         public bool HasBadWords { get; set; }
         public int BadWordsCount { get; set; }
         public Dictionary<string, int>? BadWordsList { get; set; }

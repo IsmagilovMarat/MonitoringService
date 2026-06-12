@@ -1,7 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
-using MonitoringServiceCore.Database;
 using MonitoringServiceCore.Database.BadWord;
+using MonitoringServiceCore.Database.ConsentCheckResults;
 using MonitoringServiceCore.Database.dbContext;
 using MonitoringServiceCore.Database.ExtremistMaterials;
 using MonitoringServiceCore.Database.GoogleForms;
@@ -18,8 +18,6 @@ namespace MonitoringServiceCore.Pages
         private readonly GoogleFormsDetector _googleFormsDetector;
         private readonly PersonalDataConsentService _consentService;
         private readonly ExtremistMaterialChecker _extremistChecker;
-        private readonly ILogger<UsersMainPageModel> _logger;
-
         public UsersMainPageModel(
             MonitoringDbContext dbContext,
             SiteDataDownloader siteDataDownloader,
@@ -35,7 +33,6 @@ namespace MonitoringServiceCore.Pages
             _googleFormsDetector = googleFormsDetector;
             _consentService = consentService;
             _extremistChecker = extremistChecker;
-            _logger = logger;
         }
 
         [BindProperty]
@@ -55,7 +52,6 @@ namespace MonitoringServiceCore.Pages
 
         public async Task OnGetAsync()
         {
-            // Инициализация пустых результатов
             AnalysisResult = null;
             GoogleFormsResult = null;
             ExtremistCheckResult = null;
@@ -73,18 +69,12 @@ namespace MonitoringServiceCore.Pages
 
             try
             {
-                _logger.LogInformation("Пользователь начал анализ сайта: {SiteUrl}", SiteUrl);
-
-                // Скачиваем HTML содержимое сайта
                 var htmlContent = await _siteDataDownloader.DownloadHtmlAsync(SiteUrl!);
 
-                // 1. Анализ нецензурной лексики
                 AnalysisResult = _badWordAnalyzer.AnalyzeContent(htmlContent);
 
-                // 2. Проверка Google Forms
                 GoogleFormsResult = await _googleFormsDetector.DetectGoogleFormsFromHtmlAsync(htmlContent, SiteUrl!);
 
-                // 3. Проверка экстремистских материалов
                 var extremistCheck = await _extremistChecker.CheckContentWithContextAsync(htmlContent, SiteUrl!);
                 ExtremistCheckResult = new ExtremistCheckResult
                 {
@@ -106,10 +96,8 @@ namespace MonitoringServiceCore.Pages
                     }).ToList() ?? new List<FoundMaterial>()
                 };
 
-                // 4. Проверка согласия на обработку ПД
                 ConsentResult = await _consentService.CheckConsentAsync(SiteUrl!);
 
-                // Формирование сообщений для пользователя
                 var messages = new List<string>();
 
                 if (AnalysisResult != null && AnalysisResult.HasBadWords)
@@ -121,7 +109,7 @@ namespace MonitoringServiceCore.Pages
                 {
                     if (GoogleFormsResult.IsPotentiallyMalicious)
                     {
-                        messages.Add("⚠️ Обнаружены потенциально вредоносные Google формы!");
+                        messages.Add("Обнаружены потенциально вредоносные Google формы!");
                     }
                     else
                     {
@@ -131,12 +119,12 @@ namespace MonitoringServiceCore.Pages
 
                 if (ExtremistCheckResult != null && ExtremistCheckResult.HasExtremistMaterials)
                 {
-                    messages.Add($"⚠️ Обнаружено {ExtremistCheckResult.FoundMaterials.Count} экстремистских материалов!");
+                    messages.Add($" Обнаружено {ExtremistCheckResult.FoundMaterials.Count} экстремистских материалов!");
                 }
 
                 if (ConsentResult != null && !ConsentResult.IsCompliant)
                 {
-                    messages.Add("⚠️ Отсутствует явное согласие на обработку персональных данных");
+                    messages.Add(" Отсутствует явное согласие на обработку персональных данных");
                 }
 
                 if (messages.Any())
@@ -145,14 +133,12 @@ namespace MonitoringServiceCore.Pages
                 }
                 else
                 {
-                    TempData["SuccessMessage"] = "✅ Анализ завершен! Нарушений не обнаружено.";
+                    TempData["SuccessMessage"] = " Анализ завершен! Нарушений не обнаружено.";
                 }
 
-                _logger.LogInformation("Анализ сайта {SiteUrl} успешно завершен", SiteUrl);
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Ошибка при анализе сайта {SiteUrl}", SiteUrl);
                 ErrorMessage = $"Ошибка при анализе: {ex.Message}";
                 TempData["ErrorMessage"] = ErrorMessage;
             }
@@ -179,7 +165,6 @@ namespace MonitoringServiceCore.Pages
                                            (HasGoogleForms ? 1 : 0) +
                                            (HasExtremistViolations ? 1 : 0) +
                                            (!HasConsentCompliance ? 1 : 0);
-
         public int OverallScore
         {
             get

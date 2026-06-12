@@ -19,7 +19,6 @@
             padding: 0;
             box-sizing: border-box;
         }
-
         body {
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             min-height: 100vh;
@@ -252,9 +251,6 @@
                 left: 20%;
                 animation-delay: 4s;
             }
-
-       
-
         }
 
         .requirements {
@@ -423,7 +419,6 @@
     </div>
 
     <script>
-        // Функция для показа/скрытия пароля
         function togglePassword(fieldId) {
             const passwordInput = document.getElementById(fieldId);
             const toggleButton = passwordInput.parentElement.querySelector('.password-toggle i');
@@ -439,7 +434,6 @@
             }
         }
 
-        // Анимация загрузки при отправке формы
         document.getElementById('registerForm').addEventListener('submit', function(e) {
             const registerButton = document.getElementById('registerButton');
             const registerText = document.getElementById('registerText');
@@ -452,11 +446,9 @@
             }
         });
 
-        // Автофокус на поле имени пользователя
         document.addEventListener('DOMContentLoaded', function() {
             document.getElementById('Username').focus();
 
-            // Плавное появление формы
             document.querySelector('.register-container').style.opacity = '0';
             document.querySelector('.register-container').style.transform = 'translateY(20px)';
 
@@ -467,7 +459,6 @@
             }, 100);
         });
 
-        // Валидация на клиенте
         document.getElementById('registerForm').addEventListener('submit', function(e) {
             const password = document.getElementById('Password').value;
             const confirmPassword = document.getElementById('ConfirmPassword').value;

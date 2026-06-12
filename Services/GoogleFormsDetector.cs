@@ -31,7 +31,6 @@ namespace MonitoringServiceCore.Services
             "google-form-embed"
         };
 
-        // Паттерны для фишинговых ссылок Google
         private readonly List<Regex> _googlePhishingPatterns = new List<Regex>
         {
             new Regex(@"accounts\.google\.com/v3/signin[^>]*docs\.google\.com/forms", RegexOptions.IgnoreCase),
@@ -74,19 +73,15 @@ namespace MonitoringServiceCore.Services
                 result.HtmlLoaded = true;
                 result.HtmlLength = htmlContent.Length;
 
-                // Проверка наличия Google Forms
                 result.HasGoogleForms = DetectGoogleFormsInHtml(htmlContent, out var detectionMethod);
 
-                // Проверка на вредоносные формы (включая фишинговые ссылки)
                 result.IsPotentiallyMalicious = CheckForMaliciousForms(htmlContent);
 
-                // Дополнительная проверка на фишинговые Google формы
                 result.HasGoogleForms = result.HasGoogleForms || DetectGooglePhishingLinks(htmlContent);
 
                 _logger?.LogInformation("Google Forms detection for {Url}: HasGoogleForms={Has}, Method={Method}, IsMalicious={Malicious}",
                     url, result.HasGoogleForms, detectionMethod, result.IsPotentiallyMalicious);
 
-                // Сохраняем результат в БД
                 await SaveDetectionResultToDatabaseAsync(result);
             }
             catch (Exception ex)
@@ -128,7 +123,6 @@ namespace MonitoringServiceCore.Services
                 }
             }
 
-            // 3. Проверка action атрибутов форм
             var formMatches = Regex.Matches(html, @"<form[^>]*action=[""']([^""']+)[""'][^>]*>", RegexOptions.IgnoreCase);
             foreach (Match match in formMatches)
             {
@@ -140,7 +134,6 @@ namespace MonitoringServiceCore.Services
                 }
             }
 
-            // 4. Проверка iframe src
             var iframeMatches = Regex.Matches(html, @"<iframe[^>]*src=[""']([^""']+)[""'][^>]*>", RegexOptions.IgnoreCase);
             foreach (Match match in iframeMatches)
             {
@@ -155,9 +148,6 @@ namespace MonitoringServiceCore.Services
             return false;
         }
 
-        /// <summary>
-        /// Проверяет наличие фишинговых ссылок на Google Forms
-        /// </summary>
         private bool DetectGooglePhishingLinks(string html)
         {
             if (string.IsNullOrEmpty(html))
@@ -165,7 +155,6 @@ namespace MonitoringServiceCore.Services
 
             string lowerHtml = html.ToLower();
 
-            // Проверка на паттерны фишинга
             foreach (var pattern in _googlePhishingPatterns)
             {
                 if (pattern.IsMatch(html))
@@ -175,14 +164,12 @@ namespace MonitoringServiceCore.Services
                 }
             }
 
-            // Проверка на ссылки вида accounts.google.com с упоминанием форм
             if (lowerHtml.Contains("accounts.google.com") &&
                 (lowerHtml.Contains("docs.google.com/forms") ||
                  lowerHtml.Contains("google.com/forms") ||
                  lowerHtml.Contains("create") ||
                  lowerHtml.Contains("wise")))
             {
-                // Дополнительная проверка контекста
                 var googleAuthLinks = Regex.Matches(html, @"<a[^>]*href=[""'][^""']*accounts\.google\.com[^""']*[""'][^>]*>.*?</a>", RegexOptions.IgnoreCase);
 
                 foreach (Match match in googleAuthLinks)
@@ -190,7 +177,6 @@ namespace MonitoringServiceCore.Services
                     string linkText = match.Value.ToLower();
                     string linkUrl = Regex.Match(match.Value, @"href=[""']([^""']+)[""']", RegexOptions.IgnoreCase).Groups[1].Value;
 
-                    // Если текст ссылки призывает к действию
                     if (linkText.Contains("click here") ||
                         linkText.Contains("нажмите") ||
                         linkText.Contains("verify") ||
@@ -212,26 +198,22 @@ namespace MonitoringServiceCore.Services
         {
             string lowerHtml = html.ToLower();
 
-            // Проверка на фишинговые индикаторы
             bool hasPhishingIndicators = (lowerHtml.Contains("verify") || lowerHtml.Contains("confirm") ||
                                          lowerHtml.Contains("подтвердите") || lowerHtml.Contains("верификация")) &&
                                          lowerHtml.Contains("google.com/forms");
 
-            // Проверка на запрос敏感 данных
             bool requestsSensitiveData = (lowerHtml.Contains("password") || lowerHtml.Contains("пароль") ||
                                          lowerHtml.Contains("credit card") || lowerHtml.Contains("банковская карта") ||
                                          lowerHtml.Contains("ssn") || lowerHtml.Contains("passport") ||
                                          lowerHtml.Contains("паспорт")) &&
                                          (lowerHtml.Contains("entry.") || lowerHtml.Contains("google.com/forms"));
 
-            // Проверка на срочные действия
             bool urgentAction = (lowerHtml.Contains("immediately") || lowerHtml.Contains("urgent") ||
                                 lowerHtml.Contains("as soon as possible") || lowerHtml.Contains("срочно") ||
                                 lowerHtml.Contains("немедленно")) &&
                                 (lowerHtml.Contains("verify") || lowerHtml.Contains("confirm") ||
                                  lowerHtml.Contains("click here") || lowerHtml.Contains("нажмите"));
 
-            // Проверка на ссылки авторизации Google
             bool hasGoogleAuth = lowerHtml.Contains("accounts.google.com") &&
                                  lowerHtml.Contains("docs.google.com/forms") &&
                                  (lowerHtml.Contains("signin") || lowerHtml.Contains("login"));
