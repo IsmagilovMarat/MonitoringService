@@ -121,12 +121,5 @@ namespace MonitoringServiceCore.Services
             }
         }
 
-        /// <summary>
-        /// Принудительное обновление (можно вызвать из контроллера)
-        /// </summary>
-        public async Task ForceUpdateAsync()
-        {
-            await UpdateMaterialsAsync();
-        }
     }
 }

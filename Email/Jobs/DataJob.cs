@@ -19,7 +19,7 @@ namespace MonitoringServiceCore.Email.Jobs
                 var emailsender = scope.ServiceProvider.GetService<IEmailService>();
                 try
                 {
-                    await emailsender.SendEmailAsync("fullstack_web_developer@mail.ru", "example", "hello");
+                  //  await emailsender.SendEmailAsync("fullstack_web_developer@mail.ru", "example", "hello");
 
                 }
                 catch

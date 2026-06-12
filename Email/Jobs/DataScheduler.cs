@@ -18,7 +18,7 @@ namespace MonitoringServiceCore.Email.Jobs
                 .WithIdentity("MailingTrigger", "default")
                 .StartNow()
                 .WithSimpleSchedule(x => x
-                .WithIntervalInMinutes(1)
+                .WithIntervalInHours(1)
                 .RepeatForever())
                 .Build();
 

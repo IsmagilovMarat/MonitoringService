@@ -16,9 +16,6 @@ namespace MonitoringServiceCore.Services
 
         public async Task<string> DownloadHtmlAsync(string url, string filePath = null)
         {
-            if (string.IsNullOrEmpty(url))
-                throw new ArgumentException("URL не может быть пустым", nameof(url));
-
             try
             {
                 _httpClient.DefaultRequestHeaders.UserAgent.ParseAdd(
@@ -26,25 +23,16 @@ namespace MonitoringServiceCore.Services
 
                 string html = await _httpClient.GetStringAsync(url);
 
-                Console.WriteLine($"Успешно загружено {html.Length} символов с {url}");
-
                 if (!string.IsNullOrEmpty(filePath))
                 {
                     await SaveToFileAsync(html, filePath);
-                    Console.WriteLine($"HTML сохранен в {filePath}");
                 }
-
                 return html;
-            }
-            catch (HttpRequestException ex)
-            {
-                Console.WriteLine($"Ошибка при запросе к {url}: {ex.Message}");
-                throw;
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"Неожиданная ошибка: {ex.Message}");
-                throw;
+                throw ex; 
+              
             }
         }
 

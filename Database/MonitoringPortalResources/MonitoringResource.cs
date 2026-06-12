@@ -1,5 +1,4 @@
-﻿using MonitoringService.Database.ContentSnapshots;
-using MonitoringService.Database.MonitoringPortalResources;
+﻿using MonitoringService.Database.MonitoringPortalResources;
 
 namespace MonitoringServiceCore.Database.MonitoringPortalResources
 {
@@ -11,7 +10,7 @@ namespace MonitoringServiceCore.Database.MonitoringPortalResources
         public ResourceType Type { get; set; } 
         public PortalType TypePortal { get; set; }
         public bool IsActive { get; set; }
-        public string? CheckResults { get; set; } // JSON строка с результатами проверки
+        public string? CheckResults { get; set; } 
         public DateTime? LastCheckDate { get; set; } 
     }
 }

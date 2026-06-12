@@ -41,7 +41,6 @@ namespace MonitoringServiceCore.Services
 
                 _logger.LogInformation("Начинаем проверку контента на наличие {Count} экстремистских материалов", materials.Count);
 
-                // Очищаем HTML от тегов для более точного поиска
                 var cleanText = StripHtml(htmlContent);
                 var lowerCleanText = cleanText.ToLowerInvariant();
                 var lowerHtml = htmlContent.ToLowerInvariant();

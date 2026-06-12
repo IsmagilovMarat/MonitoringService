@@ -336,14 +336,6 @@ namespace MonitoringServiceCore.Services
                 }
             }
         }
-
-        public (int Total, int WithText, int WithDate) GetStatistics(List<ExtremistMaterial> materials)
-        {
-            return (
-                materials.Count,
-                materials.Count(m => !string.IsNullOrEmpty(m.Text)),
-                materials.Count(m => m.DecisionDate.HasValue)
-            );
-        }
+       
     }
 }

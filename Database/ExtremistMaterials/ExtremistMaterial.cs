@@ -3,12 +3,12 @@
     public class ExtremistMaterial
     {
         public Guid Id { get; set; }
-        public int Number { get; set; }            // Номер в списке
-        public string? Text { get; set; }   // Слова заключенные в двойные кавычки  перечисленнные через запятую, которые есть в пронумированном блоке, который мы обрабатываем
-        public string Description { get; set; }    // Описание материала
-        public DateTime? DecisionDate { get; set; } // Дата решения суда
-        public string RawText { get; set; }        // Исходный текст
-        public int PageNumber { get; set; }        // Номер страницы, откуда взят материал
+        public int Number { get; set; }            
+        public string? Text { get; set; }   
+        public string Description { get; set; }   
+        public DateTime? DecisionDate { get; set; }
+        public string RawText { get; set; }       
+        public int PageNumber { get; set; }       
         public DateTime CreatedAt { get; set; }
 
         public DateTime? UpdatedAt { get; set; }

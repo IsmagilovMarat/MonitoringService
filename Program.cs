@@ -1,16 +1,8 @@
-using Microsoft.AspNetCore;
-using Microsoft.AspNetCore.Hosting;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.DependencyInjection;
 using MonitoringServiceCore.Database.dbContext;
-using MonitoringServiceCore.Database.Roles;
-using MonitoringServiceCore.Database.SiteAnalysisNamespace;
 using MonitoringServiceCore.Email.Interface;
 using MonitoringServiceCore.Email.Jobs;
-using MonitoringServiceCore.Email.Services;
-using MonitoringServiceCore.Email.Settings;
 using MonitoringServiceCore.Services;
-using Quartz;
 
 internal class Program
 {

@@ -7,7 +7,6 @@ namespace MonitoringServiceCore.Services
     {
         private readonly SiteDataDownloader _downloader;
 
-        // Ключевые слова и фразы для поиска согласия
         private readonly List<string> _consentKeywords = new List<string>
         {
             "согласие на обработку персональных данных",

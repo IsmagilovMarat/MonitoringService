@@ -29,7 +29,6 @@ namespace MonitoringServiceCore.Pages
         public ExtremistCheckResult? ExtremistCheckResult { get; set; }
         public List<User> Users { get; set; } = new List<User>();
         public AnalysisResult? AnalysisResult { get; set; }
-        public DictionaryInfo? DictionaryInfo { get; set; }
         public GoogleFormsDetectionResult? GoogleFormsResult { get; set; }
         public ConsentCheckResult? ConsentResult { get; set; }
         public string? ErrorMessage { get; set; }
@@ -65,7 +64,6 @@ namespace MonitoringServiceCore.Pages
             try
             {
                 Users = _dbContext.Users.ToList();
-                DictionaryInfo = _badWordAnalyzer.GetDictionaryInfo();
 
                 AnalysisResult = new AnalysisResult();
                 GoogleFormsResult = new GoogleFormsDetectionResult();
@@ -76,7 +74,6 @@ namespace MonitoringServiceCore.Pages
             {
                 _logger.LogError(ex, "Ошибка при загрузке страницы");
                 Users = new List<User>();
-                DictionaryInfo = new DictionaryInfo();
             }
         }
 
@@ -85,7 +82,6 @@ namespace MonitoringServiceCore.Pages
             if (!ModelState.IsValid)
             {
                 Users = _dbContext.Users.ToList();
-                DictionaryInfo = _badWordAnalyzer.GetDictionaryInfo();
                 return Page();
             }
 
@@ -177,7 +173,6 @@ namespace MonitoringServiceCore.Pages
 
                 ConsentResult = await _consentService.CheckConsentAsync(SiteUrl!);
 
-                DictionaryInfo = _badWordAnalyzer.GetDictionaryInfo();
                 Users = _dbContext.Users.ToList();
 
                 var messages = new List<string>();

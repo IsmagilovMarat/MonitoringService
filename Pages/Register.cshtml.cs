@@ -57,14 +57,12 @@ namespace MonitoringServiceCore.Pages
                 return Page();
             }
 
-            // Проверка, совпадают ли пароли
             if (Input.Password != Input.ConfirmPassword)
             {
                 ErrorMessage = "Пароли не совпадают";
                 return Page();
             }
 
-            // Получаем роль "Client" по умолчанию
             var clientRole = _dbContext.Roles.FirstOrDefault(r => r.RoleName == "Client");
             if (clientRole == null)
             {
@@ -72,14 +70,13 @@ namespace MonitoringServiceCore.Pages
                 return Page();
             }
 
-            // Создаем нового пользователя
             var newUser = new User
             {
                 Id = Guid.NewGuid(),
                 Name = Input.Username,
                 SecondName = Input.SecondName ?? string.Empty,
                 Email = Input.Email,
-                Password = Input.Password, // В реальном проекте нужно хешировать пароль!
+                Password = Input.Password, 
                 UserRole = clientRole,
                 RoleId = clientRole.Id
             };
@@ -90,7 +87,6 @@ namespace MonitoringServiceCore.Pages
                 await _dbContext.SaveChangesAsync();
                 SuccessMessage = "Регистрация прошла успешно! Теперь вы можете войти в систему.";
 
-                // Очищаем форму
                 Input = new RegisterInputModel();
             }
             catch (Exception ex)
