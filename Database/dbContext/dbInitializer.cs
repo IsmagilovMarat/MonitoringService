@@ -14,7 +14,6 @@ namespace MonitoringServiceCore.Database.dbContext
                 {
                 new Role { RoleName = "Admin" },
                 new Role { RoleName = "Client" },
-                new Role { RoleName = "Moderator" }
             };
 
                 context.Roles.AddRange(roles);

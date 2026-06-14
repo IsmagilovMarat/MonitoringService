@@ -102,7 +102,6 @@
                 transform: none;
             }
 
-        /* Стили для списка проверок */
         .checks-list {
             margin-top: 30px;
         }
@@ -375,7 +374,6 @@
     }
 
     <div class="container-custom">
-        <!-- Header -->
         <div class="header">
             <h1><i class="fas fa-shield-alt"></i> Мониторинг сайтов</h1>
             <p>Профессиональная проверка сайтов на наличие нецензурной лексики, экстремистских материалов и нарушений ПД</p>
@@ -386,13 +384,11 @@
             </div>
         </div>
 
-        <!-- Основная карточка с формой -->
         <div class="card">
             <div class="card-header">
                 <i class="fas fa-search"></i> Проверка сайта
             </div>
             <div class="card-body">
-                <!-- Сообщения -->
                 @if (TempData["SuccessMessage"] != null)
                 {
                     <div class="alert alert-success alert-dismissible fade show" role="alert">
@@ -415,7 +411,6 @@
                     </div>
                 }
 
-                <!-- Форма ввода URL -->
                 <form method="post" asp-page-handler="Analyze" id="analyzeForm">
                     <div class="mb-3">
                         <label for="SiteUrl" class="form-label fw-bold">
@@ -443,7 +438,6 @@
 
         @if (Model.HasResults)
         {
-            <!-- Общая оценка -->
             <div class="card mt-4">
                 <div class="card-header">
                     <i class="fas fa-chart-line"></i> Общая оценка безопасности
@@ -469,9 +463,7 @@
                 </div>
             </div>
 
-            <!-- Список всех проверок -->
             <div class="checks-list">
-                <!-- Проверка 1: Нецензурная лексика -->
                 <div class="check-item" data-check="badwords">
                     <div class="check-header">
                         <div class="check-icon">
@@ -550,7 +542,6 @@
                     </div>
                 </div>
 
-                <!-- Проверка 2: Google Forms -->
                 <div class="check-item" data-check="googleforms">
                     <div class="check-header">
                         <div class="check-icon">
@@ -620,7 +611,6 @@
                     </div>
                 </div>
 
-                <!-- Проверка 3: Экстремистские материалы -->
                 <div class="check-item" data-check="extremism">
                     <div class="check-header">
                         <div class="check-icon">
@@ -711,7 +701,6 @@
                     </div>
                 </div>
 
-                <!-- Проверка 4: Персональные данные -->
                 <div class="check-item" data-check="personaldata">
                     <div class="check-header">
                         <div class="check-icon">
@@ -778,7 +767,6 @@
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script>
-        // Функционал раскрытия/скрытия проверок
         document.querySelectorAll('.check-item').forEach(item => {
             const header = item.querySelector('.check-header');
 
@@ -795,7 +783,6 @@
             });
         });
 
-        // Анимация и блокировка кнопки при отправке
         const form = document.getElementById('analyzeForm');
         if (form) {
             form.addEventListener('submit', function(e) {
@@ -807,7 +794,6 @@
             });
         }
 
-        // Плавное появление элементов при загрузке
         document.addEventListener('DOMContentLoaded', function() {
             const elements = document.querySelectorAll('.card, .check-item');
             elements.forEach((el, index) => {
@@ -820,7 +806,6 @@
                 }, index * 100);
             });
 
-            // Автоматически раскрываем проверки с нарушениями
             @if (Model.HasBadWordsViolations)
             {
                     <text>

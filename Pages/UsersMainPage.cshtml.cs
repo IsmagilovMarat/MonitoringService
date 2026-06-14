@@ -39,8 +39,6 @@ namespace MonitoringServiceCore.Pages
         [Required(ErrorMessage = "Введите URL сайта")]
         [Url(ErrorMessage = "Введите корректный URL (например, https://example.com)")]
         public string? SiteUrl { get; set; }
-
-        // Результаты всех проверок
         public AnalysisResult? AnalysisResult { get; set; }
         public GoogleFormsDetectionResult? GoogleFormsResult { get; set; }
         public ExtremistCheckResult? ExtremistCheckResult { get; set; }
@@ -64,7 +62,6 @@ namespace MonitoringServiceCore.Pages
             {
                 return Page();
             }
-
             IsAnalyzing = true;
 
             try
@@ -181,7 +178,6 @@ namespace MonitoringServiceCore.Pages
                 return Math.Max(0, score);
             }
         }
-
         public string OverallStatus
         {
             get
