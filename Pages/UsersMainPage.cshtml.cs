@@ -5,8 +5,10 @@ using MonitoringServiceCore.Database.ConsentCheckResults;
 using MonitoringServiceCore.Database.dbContext;
 using MonitoringServiceCore.Database.ExtremistMaterials;
 using MonitoringServiceCore.Database.GoogleForms;
+using MonitoringServiceCore.Email.Interface;
 using MonitoringServiceCore.Services;
 using System.ComponentModel.DataAnnotations;
+using System.Security.Claims;
 
 namespace MonitoringServiceCore.Pages
 {
@@ -18,6 +20,7 @@ namespace MonitoringServiceCore.Pages
         private readonly GoogleFormsDetector _googleFormsDetector;
         private readonly PersonalDataConsentService _consentService;
         private readonly ExtremistMaterialChecker _extremistChecker;
+        private readonly IEmailService _emailService;
         public UsersMainPageModel(
             MonitoringDbContext dbContext,
             SiteDataDownloader siteDataDownloader,
@@ -25,7 +28,8 @@ namespace MonitoringServiceCore.Pages
             GoogleFormsDetector googleFormsDetector,
             PersonalDataConsentService consentService,
             ExtremistMaterialChecker extremistChecker,
-            ILogger<UsersMainPageModel> logger)
+            ILogger<UsersMainPageModel> logger,
+            IEmailService emailService)
         {
             _dbContext = dbContext;
             _siteDataDownloader = siteDataDownloader;
@@ -33,6 +37,7 @@ namespace MonitoringServiceCore.Pages
             _googleFormsDetector = googleFormsDetector;
             _consentService = consentService;
             _extremistChecker = extremistChecker;
+            _emailService = emailService;
         }
 
         [BindProperty]
@@ -132,7 +137,7 @@ namespace MonitoringServiceCore.Pages
                 {
                     TempData["SuccessMessage"] = " Анализ завершен! Нарушений не обнаружено.";
                 }
-
+                await SendEmailNotificationAsync();
             }
             catch (Exception ex)
             {
@@ -147,6 +152,69 @@ namespace MonitoringServiceCore.Pages
             return Page();
         }
 
+        private async Task SendEmailNotificationAsync()
+        {
+            try
+            {
+                var users = _dbContext.Users;
+                var currentUser = HttpContext.User;
+                Guid.TryParse(currentUser.FindFirstValue("UserId"),out Guid userIdClaim);
+                var userToSend = users.Where(x => x.Id == userIdClaim).FirstOrDefault();
+
+                var subject = $"Результаты анализа сайта {SiteUrl}";
+                var messageBuilder = new System.Text.StringBuilder();
+                messageBuilder.AppendLine($"<h2>Анализ сайта {SiteUrl} завершён</h2>");
+                messageBuilder.AppendLine($"<p><strong>Время проверки:</strong> {DateTime.Now:dd.MM.yyyy HH:mm:ss}</p>");
+                messageBuilder.AppendLine("<hr/>");
+
+                bool hasViolations = false;
+
+                if (ExtremistCheckResult != null && ExtremistCheckResult.HasExtremistMaterials)
+                {
+                    hasViolations = true;
+                    messageBuilder.AppendLine($"<h3 style='color:red'>⚠️ Экстремистские материалы ({ExtremistCheckResult.FoundMaterials.Count})</h3>");
+                    foreach (var material in ExtremistCheckResult.FoundMaterials)
+                    {
+                        messageBuilder.AppendLine($"<div style='border:1px solid #ff4444; margin:10px; padding:10px; border-radius:5px'>");
+                        messageBuilder.AppendLine($"<p><strong>№{material.Number}</strong> - <em>Найдено по: {material.MatchedKeyword}</em></p>");
+                        messageBuilder.AppendLine($"<p>{material.Description}</p>");
+                        if (!string.IsNullOrEmpty(material.Context))
+                        {
+                            messageBuilder.AppendLine($"<p><strong>Контекст:</strong><br/>{material.Context}</p>");
+                        }
+                        messageBuilder.AppendLine($"</div>");
+                    }
+                }
+
+                if (AnalysisResult != null && AnalysisResult.HasBadWords)
+                {
+                    hasViolations = true;
+                    messageBuilder.AppendLine($"<p style='color:orange'>⚠️ Нецензурные слова: {AnalysisResult.TotalBadWordsCount}</p>");
+                }
+
+                if (ConsentResult != null && !ConsentResult.IsCompliant)
+                {
+                    hasViolations = true;
+                    messageBuilder.AppendLine($"<p style='color:red'>⚠️ Нет согласия на обработку ПД</p>");
+                }
+
+                if (!hasViolations)
+                {
+                    messageBuilder.AppendLine("<p style='color:green; font-size:1.2em'>✅ Нарушений не обнаружено.</p>");
+                }
+                if (userToSend != null && userToSend.Email != String.Empty) {
+                    await _emailService.SendEmailAsync(userToSend.Email, subject, messageBuilder.ToString());
+                }
+                else
+                {
+                    await _emailService.SendEmailAsync("fullstack_web_developer@mail.ru", subject, messageBuilder.ToString());
+                }
+            }
+            catch (Exception ex)
+            {
+                throw ex;
+            }
+        }
         public bool HasBadWordsViolations => AnalysisResult?.HasBadWords == true;
         public int BadWordsCount => AnalysisResult?.TotalBadWordsCount ?? 0;
 

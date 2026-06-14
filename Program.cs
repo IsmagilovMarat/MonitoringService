@@ -80,3 +80,6 @@ internal class Program
 //https://www.geeksforgeeks.org/websites-apps/how-to-add-a-link-to-a-google-form/
 //https://ru.wikipedia.org/wiki/Гады
 //https://minjust.gov.ru/ru/extremist-materials/
+
+//ПД
+//https://skillbox.ru/media/business/personalnye-dannye-dlya-digitalmarketinga/

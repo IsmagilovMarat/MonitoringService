@@ -171,16 +171,22 @@ namespace MonitoringServiceCore.Pages
                     var consentResult = await _consentService.CheckConsentAsync(resource.Url);
                     result.HasConsent = consentResult?.IsCompliant ?? false;
 
-
-                    resource.CheckResults = JsonSerializer.Serialize(result);
-                    resource.LastCheckDate = DateTime.Now;
-
+                    if (result.HasExtremistMaterials == false && result.HasBadWords == false && result.HasGoogleForms == false) 
+                    {
+                        resource.CheckResults = "Нет нарушений";
+                    }
+                    else
+                    {
+                        resource.CheckResults = "Есть нарушения";
+                    }
+                     resource.LastCheckDate = DateTime.Now;
+                    await _dbContext.SaveChangesAsync();
                     SuccessMessage = $"Проверка ресурса \"{resource.Name}\" завершена!";
                 }
                 catch (Exception ex)
                 {
                     result.ErrorMessage = $"Ошибка при проверке: {ex.Message}";
-                    resource.CheckResults = JsonSerializer.Serialize(result);
+                    resource.CheckResults = "Есть нарушения";
                     resource.LastCheckDate = DateTime.Now;
                     await _dbContext.SaveChangesAsync();
                 }

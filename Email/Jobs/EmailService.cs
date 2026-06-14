@@ -19,7 +19,6 @@ namespace MonitoringServiceCore.Email.Jobs
             _scopeFactory = scopeFactory;
         }
        
-
         public Task SendEmailAsync(string toEmail, string subject, string message)
         {
             var from = "maratismage@mail.ru";
