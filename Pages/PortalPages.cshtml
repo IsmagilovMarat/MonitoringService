@@ -305,7 +305,6 @@
             text-decoration: underline;
         }
 
-        /* Стили для результатов проверки */
         .result-row {
             background: #f8f9fa;
         }
@@ -353,7 +352,6 @@
 </head>
 <body>
     <div class="container-custom">
-        <!-- Верхняя панель -->
         <div class="top-bar">
             <div class="nav-buttons">
                 <a href="/Index" class="btn-back">
@@ -368,13 +366,11 @@
             </div>
         </div>
 
-        <!-- Header -->
         <div class="header">
             <h1><i class="fas fa-university"></i> КФУ проверка</h1>
             <p>Управление ресурсами для мониторинга (Правительственные порталы)</p>
         </div>
 
-        <!-- Статистика -->
         <div class="row mb-4">
             <div class="col-md-3">
                 <div class="stats-card">
@@ -397,7 +393,6 @@
             
         </div>
 
-        <!-- Сообщения -->
         @if (!string.IsNullOrEmpty(Model.SuccessMessage))
         {
             <div class="alert alert-success alert-dismissible fade show" role="alert">
@@ -413,7 +408,6 @@
             </div>
         }
 
-        <!-- Форма добавления ресурса -->
         <div class="card">
             <div class="card-header">
                 <i class="fas fa-plus-circle"></i> Добавить новый ресурс
@@ -443,7 +437,6 @@
             </div>
         </div>
 
-        <!-- Список ресурсов -->
         <div class="card">
             <div class="card-header">
                 <i class="fas fa-list"></i> Список ресурсов 
@@ -565,7 +558,6 @@
                                                                 </div>
                                                             </div>
                                                             
-                                                            <!-- Детали нарушений -->
                                                             @if (checkResult.HasBadWords && checkResult.BadWordsList != null && checkResult.BadWordsList.Any())
                                                             {
                                                                 <div class="mt-3">

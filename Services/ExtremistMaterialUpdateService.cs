@@ -61,8 +61,6 @@ namespace MonitoringServiceCore.Services
                 var oldCount = dbContext.ExtremistMaterials.Count();
                 dbContext.ExtremistMaterials.RemoveRange(dbContext.ExtremistMaterials);
                 await dbContext.SaveChangesAsync();
-
-                // Сохраняем пачками по 1000 записей для оптимизации
                 const int batchSize = 1000;
                 for (int i = 0; i < materials.Count; i += batchSize)
                 {

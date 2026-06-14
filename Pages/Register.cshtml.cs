@@ -34,14 +34,12 @@ namespace MonitoringServiceCore.Pages
                 return Page();
             }
 
-            // Проверка валидности email
             if (!IsValidEmail(Input.Email))
             {
                 ErrorMessage = "Введите корректный email адрес";
                 return Page();
             }
 
-            // Проверка, существует ли пользователь с таким именем
             var existingUser = _dbContext.Users.FirstOrDefault(u => u.Name == Input.Username);
             if (existingUser != null)
             {
@@ -49,7 +47,6 @@ namespace MonitoringServiceCore.Pages
                 return Page();
             }
 
-            // Проверка, существует ли пользователь с таким email
             var existingEmail = _dbContext.Users.FirstOrDefault(u => u.Email == Input.Email);
             if (existingEmail != null)
             {
@@ -104,7 +101,6 @@ namespace MonitoringServiceCore.Pages
 
             try
             {
-                // Простая проверка email через Regex
                 string pattern = @"^[^@\s]+@[^@\s]+\.[^@\s]+$";
                 return Regex.IsMatch(email, pattern, RegexOptions.IgnoreCase);
             }

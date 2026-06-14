@@ -115,7 +115,6 @@ namespace MonitoringServiceCore.Services
             string context = text.Substring(start, end - start);
             context = context.Replace("\n", " ").Replace("\r", " ").Replace("\t", " ");
 
-            // Выделяем найденное слово
             int wordPosInContext = position - start;
             string wordInContext = text.Substring(position, wordLength);
             context = context.Substring(0, wordPosInContext) +

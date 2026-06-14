@@ -103,7 +103,6 @@ namespace MonitoringServiceCore.Services
 
             string lowerHtml = html.ToLower();
 
-            // 1. Проверка по регулярным выражениям
             foreach (var pattern in _googleFormsPatterns)
             {
                 if (pattern.IsMatch(html))
@@ -113,7 +112,6 @@ namespace MonitoringServiceCore.Services
                 }
             }
 
-            // 2. Проверка индикаторов
             foreach (var indicator in _googleFormsIndicators)
             {
                 if (lowerHtml.Contains(indicator))
