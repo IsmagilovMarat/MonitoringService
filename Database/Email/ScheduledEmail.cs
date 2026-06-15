@@ -24,8 +24,6 @@ namespace MonitoringServiceCore.Database.Email
         public bool IsSent { get; set; }
 
         public DateTime CreatedAt { get; set; }
-
-        [Column(TypeName = "jsonb")]
         public string CheckResultSnapshot { get; set; } = string.Empty;
 
         public int DelayDays { get; set; }

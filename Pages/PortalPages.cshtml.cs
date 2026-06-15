@@ -174,14 +174,13 @@ namespace MonitoringServiceCore.Pages
                     var jsonResult = JsonSerializer.Serialize(result);
                     if (result.HasExtremistMaterials == false && result.HasBadWords == false && result.HasGoogleForms == false)
                     {
-                        resource.CheckResults = "Нет нарушений";
+                        resource.CheckResults = JsonSerializer.Serialize("Нет нарушений"); 
                     }
                     else
                     {
                         resource.CheckResults = jsonResult;
                     }
-                    resource.LastCheckDate = DateTime.Now;
-                    await _dbContext.SaveChangesAsync();
+                    
                     bool hasViolations = result.HasBadWords || result.HasGoogleForms || result.HasExtremistMaterials || !result.HasConsent;
 
                     if (resource.IsActive && hasViolations)
@@ -189,12 +188,13 @@ namespace MonitoringServiceCore.Pages
                         await ScheduleDelayedEmails(resource, result);
                     }
                     SuccessMessage = $"Проверка ресурса \"{resource.Name}\" завершена!";
+                    await _dbContext.SaveChangesAsync();
                 }
                 catch (Exception ex)
                 {
                     result.ErrorMessage = $"Ошибка при проверке: {ex.Message}";
-                    resource.CheckResults = "Есть нарушения";
-                    resource.LastCheckDate = DateTime.Now;
+                    resource.CheckResults =  JsonSerializer.Serialize("Нет нарушений"); ;
+                    resource.LastCheckDate = DateTime.UtcNow;
                     await _dbContext.SaveChangesAsync();
                 }
 
@@ -264,7 +264,7 @@ namespace MonitoringServiceCore.Pages
                 };
                 var snapshotJson = JsonSerializer.Serialize(snapshot);
 
-                var today = DateTime.Today;
+                var today = DateTime.UtcNow;
                 var sendTimes = new[]
                 {
                 (days: 1, time: today.AddDays(1).AddHours(9)),

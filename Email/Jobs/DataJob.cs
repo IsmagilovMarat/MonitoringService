@@ -23,7 +23,7 @@ namespace MonitoringServiceCore.Email.Jobs
             var emailService= scope.ServiceProvider.GetService<IEmailService>();
             try
             {
-                var now = DateTime.Now;
+                var now = DateTime.UtcNow;
                 var emailsToSend = await dbContext.ScheduledEmails
                     .Where(e => !e.IsSent && e.ScheduledTime <= now)
                     .ToListAsync();
