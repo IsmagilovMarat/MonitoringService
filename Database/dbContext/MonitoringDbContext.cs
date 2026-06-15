@@ -1,4 +1,5 @@
 ﻿using Microsoft.EntityFrameworkCore;
+using MonitoringServiceCore.Database.Email;
 using MonitoringServiceCore.Database.ExtremistMaterials;
 using MonitoringServiceCore.Database.GoogleForms;
 using MonitoringServiceCore.Database.MonitoringPortalResources;
@@ -66,6 +67,8 @@ namespace MonitoringServiceCore.Database.dbContext
             {
                 entity.HasKey(e => e.Id);
             });
+            modelbuilder.Entity<ScheduledEmail>(entity =>
+            entity.HasKey(e => e.Id));
 
         }
         public DbSet<User> Users { get; set; }
@@ -78,7 +81,7 @@ namespace MonitoringServiceCore.Database.dbContext
         public DbSet<MonitoringResource> Resources { get; set; }
         public DbSet<GoogleFormsDetectionResult> GoogleFormsDetectionResults { get; set; }
 
-
+        public DbSet<ScheduledEmail> ScheduledEmails { get; set; }
 
     }
 

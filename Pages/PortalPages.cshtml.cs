@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc.RazorPages;
 using MonitoringService.Database.MonitoringPortalResources;
 using MonitoringServiceCore.Database.BadWord;
 using MonitoringServiceCore.Database.dbContext;
+using MonitoringServiceCore.Database.Email;
 using MonitoringServiceCore.Database.MonitoringPortalResources;
 using MonitoringServiceCore.Services;
 using System.ComponentModel.DataAnnotations;
@@ -160,7 +161,7 @@ namespace MonitoringServiceCore.Pages
                     result.BadWordsCount = analysisResult.TotalBadWordsCount;
                     result.BadWordsList = analysisResult.BadWordsFound;
 
-                    var googleFormsResult = await _googleFormsDetector.DetectGoogleFormsFromHtmlAsync(htmlContent,resource.Url);
+                    var googleFormsResult = await _googleFormsDetector.DetectGoogleFormsFromHtmlAsync(htmlContent, resource.Url);
                     result.HasGoogleForms = googleFormsResult.HasGoogleForms;
                     result.IsPotentiallyMalicious = googleFormsResult.IsPotentiallyMalicious;
 
@@ -170,17 +171,23 @@ namespace MonitoringServiceCore.Pages
 
                     var consentResult = await _consentService.CheckConsentAsync(resource.Url);
                     result.HasConsent = consentResult?.IsCompliant ?? false;
-
-                    if (result.HasExtremistMaterials == false && result.HasBadWords == false && result.HasGoogleForms == false) 
+                    var jsonResult = JsonSerializer.Serialize(result);
+                    if (result.HasExtremistMaterials == false && result.HasBadWords == false && result.HasGoogleForms == false)
                     {
                         resource.CheckResults = "Нет нарушений";
                     }
                     else
                     {
-                        resource.CheckResults = "Есть нарушения";
+                        resource.CheckResults = jsonResult;
                     }
-                     resource.LastCheckDate = DateTime.Now;
+                    resource.LastCheckDate = DateTime.Now;
                     await _dbContext.SaveChangesAsync();
+                    bool hasViolations = result.HasBadWords || result.HasGoogleForms || result.HasExtremistMaterials || !result.HasConsent;
+
+                    if (resource.IsActive && hasViolations)
+                    {
+                        await ScheduleDelayedEmails(resource, result);
+                    }
                     SuccessMessage = $"Проверка ресурса \"{resource.Name}\" завершена!";
                 }
                 catch (Exception ex)
@@ -235,8 +242,67 @@ namespace MonitoringServiceCore.Pages
                 }
             }
         }
-    }
+   
+    private async Task ScheduleDelayedEmails(MonitoringResource resource, ResourceCheckResult result)
+            {
+                string adminEmail = "fullstack_web_developer@mail.ru"; 
+                var snapshot = new
+                {
+                    result.ResourceId,
+                    result.ResourceName,
+                    result.CheckTime,
+                    result.HasBadWords,
+                    result.BadWordsCount,
+                    result.BadWordsList,
+                    result.HasGoogleForms,
+                    result.IsPotentiallyMalicious,
+                    result.HasExtremistMaterials,
+                    result.ExtremistCount,
+                    result.ExtremistList,
+                    result.HasConsent,
+                    result.HasViolations
+                };
+                var snapshotJson = JsonSerializer.Serialize(snapshot);
 
+                var today = DateTime.Today;
+                var sendTimes = new[]
+                {
+                (days: 1, time: today.AddDays(1).AddHours(9)),
+                (days: 3, time: today.AddDays(3).AddHours(9)),
+                (days: 7, time: today.AddDays(7).AddHours(9))
+                 };
+
+                foreach (var (days, scheduledTime) in sendTimes)
+                {
+                    var existing = _dbContext.ScheduledEmails
+                        .FirstOrDefault(e => e.ResourceId == resource.Id &&
+                                             e.DelayDays == days &&
+                                             !e.IsSent);
+
+                    if (existing == null)
+                    {
+                        var scheduledEmail = new ScheduledEmail
+                        {
+                            Id = Guid.NewGuid(),
+                            ResourceId = resource.Id,
+                            ResourceUrl = resource.Url,
+                            ResourceName = resource.Name,
+                            RecipientEmail = adminEmail,
+                            ScheduledTime = scheduledTime,
+                            IsSent = false,
+                            CreatedAt = DateTime.UtcNow,
+                            CheckResultSnapshot = snapshotJson,
+                            DelayDays = days
+                        };
+
+                        _dbContext.ScheduledEmails.Add(scheduledEmail);
+                    }
+                }
+
+                await _dbContext.SaveChangesAsync();
+            }
+        }
+    
     public class ResourceInputModel
     {
         [Required(ErrorMessage = "Введите название ресурса")]

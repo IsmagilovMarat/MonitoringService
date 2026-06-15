@@ -1,6 +1,5 @@
 ﻿using Quartz;
 using Quartz.Impl;
-using Quartz.Spi;
 
 namespace MonitoringServiceCore.Email.Jobs
 {
@@ -18,7 +17,7 @@ namespace MonitoringServiceCore.Email.Jobs
                 .WithIdentity("MailingTrigger", "default")
                 .StartNow()
                 .WithSimpleSchedule(x => x
-                .WithIntervalInHours(1)
+                .WithIntervalInMinutes(1)
                 .RepeatForever())
                 .Build();
 
